@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -152,6 +153,11 @@ export const ChatInterface = () => {
       }
     } catch (error) {
       console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -159,63 +165,94 @@ export const ChatInterface = () => {
 
   const startVoiceCall = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true,
+        video: false 
+      });
+      
       setMediaStream(stream);
       setIsVoiceActive(true);
       
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      
-      recognition.onresult = async (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('');
+      toast({
+        title: "Voice activated",
+        description: "Your microphone is now active",
+      });
+
+      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
         
-        if (event.results[0].isFinal) {
-          const userMessage: Message = {
-            id: Date.now().toString(),
-            content: transcript,
-            role: "user",
-            timestamp: new Date(),
-          };
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        recognition.onresult = async (event) => {
+          const transcript = Array.from(event.results)
+            .map(result => result[0])
+            .map(result => result.transcript)
+            .join('');
           
-          setMessages(prev => [...prev, userMessage]);
-          const response = await callMistralAPI(transcript);
-          
-          const assistantMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: response,
-            role: "assistant",
-            timestamp: new Date(),
-          };
-          
-          setMessages(prev => [...prev, assistantMessage]);
-          
-          const utterance = new SpeechSynthesisUtterance(response);
-          window.speechSynthesis.speak(utterance);
-        }
-      };
-      
-      recognition.start();
+          if (event.results[0].isFinal) {
+            const userMessage: Message = {
+              id: Date.now().toString(),
+              content: transcript,
+              role: "user",
+              timestamp: new Date(),
+            };
+            
+            setMessages(prev => [...prev, userMessage]);
+            const response = await callMistralAPI(transcript);
+            
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: response,
+              role: "assistant",
+              timestamp: new Date(),
+            };
+            
+            setMessages(prev => [...prev, assistantMessage]);
+            
+            const utterance = new SpeechSynthesisUtterance(response);
+            window.speechSynthesis.speak(utterance);
+          }
+        };
+        
+        recognition.start();
+      }
     } catch (error) {
       console.error("Error accessing microphone:", error);
+      toast({
+        title: "Error",
+        description: "Failed to access microphone. Please check your permissions.",
+        variant: "destructive",
+      });
     }
   };
 
   const startVideoCall = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
       setMediaStream(stream);
       setIsVideoActive(true);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+
+      toast({
+        title: "Video activated",
+        description: "Your camera is now active",
+      });
     } catch (error) {
       console.error("Error accessing camera:", error);
+      toast({
+        title: "Error",
+        description: "Failed to access camera. Please check your permissions.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -226,7 +263,10 @@ export const ChatInterface = () => {
           cursor: "always",
           displaySurface: "monitor"
         },
-        audio: false
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
       });
       
       setScreenStream(stream);
@@ -234,28 +274,24 @@ export const ChatInterface = () => {
       
       if (screenRef.current) {
         screenRef.current.srcObject = stream;
-        
-        const videoTrack = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(videoTrack);
-        
-        const interval = setInterval(async () => {
-          if (isScreenSharing) {
-            try {
-              const bitmap = await imageCapture.grabFrame();
-              console.log("Captured screen frame for AI analysis");
-            } catch (error) {
-              console.error("Error capturing screen frame:", error);
-            }
-          }
-        }, 5000);
-        
-        videoTrack.onended = () => {
-          clearInterval(interval);
-          stopMediaStream();
-        };
       }
+
+      toast({
+        title: "Screen share activated",
+        description: "Your screen is now being shared",
+      });
+
+      // Listen for when the user stops sharing
+      stream.getVideoTracks()[0].onended = () => {
+        stopMediaStream();
+      };
     } catch (error) {
       console.error("Error sharing screen:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share screen. Please check your permissions.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -274,6 +310,10 @@ export const ChatInterface = () => {
           fileUrl,
         };
         setMessages((prev) => [...prev, fileMessage]);
+        toast({
+          title: "File uploaded",
+          description: `${file.name} has been shared`,
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -290,6 +330,12 @@ export const ChatInterface = () => {
       screenStream.getTracks().forEach(track => track.stop());
       setScreenStream(null);
       setIsScreenSharing(false);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    if (screenRef.current) {
+      screenRef.current.srcObject = null;
     }
   };
 
