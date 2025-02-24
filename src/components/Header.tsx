@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,14 +30,16 @@ export const Header = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <motion.div
-            className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            SageX
-          </motion.div>
+          <Link to="/">
+            <motion.div
+              className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              SageX
+            </motion.div>
+          </Link>
 
           <nav className="hidden md:flex space-x-8">
             {["Product", "Resources", "Pricing", "Blog"].map((item, index) => (
@@ -51,6 +54,16 @@ export const Header = () => {
                 {item}
               </motion.a>
             ))}
+            <Link to="/chat">
+              <motion.span
+                className="text-white hover:text-purple-400 transition-colors"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                Chat
+              </motion.span>
+            </Link>
           </nav>
 
           <motion.button
@@ -88,6 +101,12 @@ export const Header = () => {
                 {item}
               </a>
             ))}
+            <Link
+              to="/chat"
+              className="block text-white hover:text-purple-400 transition-colors"
+            >
+              Chat
+            </Link>
             <button className="w-full px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-medium transition-all duration-300">
               Get Started
             </button>
