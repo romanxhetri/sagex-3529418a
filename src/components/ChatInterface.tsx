@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -119,7 +120,6 @@ export const ChatInterface = () => {
 
   const callMistralAPI = async (prompt: string) => {
     try {
-      // Prepare system message based on enabled capabilities
       const enabledCapabilities = capabilities
         .filter(cap => cap.enabled)
         .map(cap => cap.name)
@@ -134,7 +134,7 @@ export const ChatInterface = () => {
           Authorization: `Bearer ffF0FI3Cxp8iNPJpuCjDjqWZcSjCKBf8`,
         },
         body: JSON.stringify({
-          model: "mistral-large-2.0",
+          model: "mistral-medium",  // Changed from mistral-large-2.0 to mistral-medium
           messages: [
             { role: "system", content: systemMessage },
             { role: "user", content: prompt }
