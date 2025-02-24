@@ -45,7 +45,7 @@ export const ChatInterface = () => {
           Authorization: `Bearer ffF0FI3Cxp8iNPJpuCjDjqWZcSjCKBf8`,
         },
         body: JSON.stringify({
-          model: "mistral-large-2.0",
+          model: "mistral-small",  // Changed from mistral-large-2.0 to mistral-small
           messages: [
             {
               role: "system",
