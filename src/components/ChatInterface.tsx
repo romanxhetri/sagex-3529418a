@@ -17,6 +17,7 @@ export const ChatInterface = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isReasoningMinimized, setIsReasoningMinimized] = useState(false);
+  const [currentThought, setCurrentThought] = useState<string>("");
   const { toast } = useToast();
   
   const [capabilities, setCapabilities] = useState<Capability[]>([
@@ -82,12 +83,12 @@ export const ChatInterface = () => {
 
   const callMistralAPI = async (prompt: string) => {
     try {
-      const enabledCapabilities = capabilities
-        .filter(cap => cap.enabled)
-        .map(cap => cap.name)
-        .join(", ");
+      setCurrentThought(`🤔 Analyzing the user's request: "${prompt}"
+🎭 Preparing to respond in a comedic and friendly tone
+🔄 Accessing my knowledge base for relevant information
+🎯 Formulating a response that combines humor with helpfulness`);
 
-      const systemMessage = `You are a friendly, comedic AI assistant that uses emojis and helps users with ${enabledCapabilities}. You excel at advanced reasoning, deep thinking, and experimental features. You can analyze content, provide explanations, and assist with various tasks in a fun way. Always respond with emojis and in a comedic tone. Format your responses with clear sections and emojis for better readability.`;
+      const systemMessage = `You are SageX, a friendly and comedic AI assistant that explains its thinking process. When asked about your identity, incorporate humor and emojis while maintaining helpfulness. Always include a clear explanation of your reasoning process.`;
 
       const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -327,10 +328,9 @@ export const ChatInterface = () => {
       </div>
 
       <CapabilitiesDisplay
-        capabilities={capabilities}
-        onToggle={toggleCapability}
         isMinimized={isReasoningMinimized}
         onToggleMinimize={() => setIsReasoningMinimized(!isReasoningMinimized)}
+        currentThought={currentThought}
       />
 
       <div className="flex-1 overflow-y-auto">

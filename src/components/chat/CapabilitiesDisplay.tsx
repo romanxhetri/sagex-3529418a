@@ -3,27 +3,19 @@ import React from "react";
 import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface Capability {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  enabled: boolean;
-  description: string;
-}
-
-interface CapabilitiesDisplayProps {
-  capabilities: Capability[];
-  onToggle: (id: string) => void;
+interface ReasoningDisplayProps {
   isMinimized: boolean;
   onToggleMinimize: () => void;
+  currentThought?: string;
 }
 
-export const CapabilitiesDisplay = ({
-  capabilities,
-  onToggle,
+export const CapabilitiesDisplay: React.FC<ReasoningDisplayProps> = ({
   isMinimized,
   onToggleMinimize,
-}: CapabilitiesDisplayProps) => {
+  currentThought
+}) => {
+  if (!currentThought) return null;
+
   return (
     <motion.div 
       initial={{ height: "auto" }}
@@ -32,7 +24,10 @@ export const CapabilitiesDisplay = ({
     >
       <div className="p-4">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold">Reasoning Details</h3>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-400" />
+            Thinking Process
+          </h3>
           <button
             onClick={onToggleMinimize}
             className="text-gray-400 hover:text-white transition-colors"
@@ -42,23 +37,17 @@ export const CapabilitiesDisplay = ({
         </div>
         
         {!isMinimized && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {capabilities.map((cap) => (
-              <button
-                key={cap.id}
-                onClick={() => onToggle(cap.id)}
-                className={`flex items-center space-x-2 p-3 rounded-lg transition-colors ${
-                  cap.enabled ? 'bg-purple-600 text-white' : 'bg-glass text-gray-400'
-                }`}
-              >
-                {cap.icon}
-                <div className="text-left">
-                  <span className="block">{cap.name}</span>
-                  <span className="text-xs opacity-75">{cap.description}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="prose prose-invert max-w-none"
+          >
+            <div className="text-sm text-gray-300 space-y-2">
+              {currentThought.split('\n').map((line, i) => (
+                <p key={i} className="leading-relaxed">{line}</p>
+              ))}
+            </div>
+          </motion.div>
         )}
       </div>
     </motion.div>
