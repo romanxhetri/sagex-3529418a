@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -146,7 +145,6 @@ export const ChatInterface = () => {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // If voice is active, use speech synthesis to respond
       if (isVoiceActive) {
         const utterance = new SpeechSynthesisUtterance(response);
         window.speechSynthesis.speak(utterance);
@@ -164,7 +162,6 @@ export const ChatInterface = () => {
       setMediaStream(stream);
       setIsVoiceActive(true);
       
-      // Initialize speech recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       
@@ -197,7 +194,6 @@ export const ChatInterface = () => {
           
           setMessages(prev => [...prev, assistantMessage]);
           
-          // Speak the response
           const utterance = new SpeechSynthesisUtterance(response);
           window.speechSynthesis.speak(utterance);
         }
@@ -224,7 +220,6 @@ export const ChatInterface = () => {
 
   const startScreenShare = async () => {
     try {
-      // @ts-ignore - TypeScript doesn't recognize getDisplayMedia
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
         video: { 
           cursor: "always",
@@ -239,26 +234,21 @@ export const ChatInterface = () => {
       if (screenRef.current) {
         screenRef.current.srcObject = stream;
         
-        // Set up screen capture frames for AI analysis
         const videoTrack = stream.getVideoTracks()[0];
         const imageCapture = new ImageCapture(videoTrack);
         
-        // Periodically capture frames for analysis
         const interval = setInterval(async () => {
           if (isScreenSharing) {
             try {
               const bitmap = await imageCapture.grabFrame();
-              // Here you would send the frame to your AI for analysis
-              // For now, we'll just log that we captured a frame
               console.log("Captured screen frame for AI analysis");
             } catch (error) {
               console.error("Error capturing screen frame:", error);
             }
           }
-        }, 5000); // Capture every 5 seconds
+        }, 5000);
         
-        // Clean up interval when screen sharing stops
-        stream.getVideoTracks()[0].onended = () => {
+        videoTrack.onended = () => {
           clearInterval(interval);
           stopMediaStream();
         };
@@ -311,11 +301,28 @@ export const ChatInterface = () => {
   return (
     <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[80vh] flex flex-col">
       <div className="p-4 border-b border-glass-border bg-purple-900/20">
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex space-x-2">
+              {capabilities.map((cap) => (
+                <button
+                  key={cap.id}
+                  onClick={() => toggleCapability(cap.id)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    cap.enabled ? 'text-purple-400' : 'text-gray-500'
+                  } hover:text-purple-300`}
+                  title={cap.name}
+                >
+                  {cap.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="text-center">
             <h2 className="text-xl font-semibold">SageX</h2>
             <p className="text-sm text-gray-400">Created by Roman Xhetri</p>
           </div>
+          <div className="w-[120px]"></div>
         </div>
       </div>
 
