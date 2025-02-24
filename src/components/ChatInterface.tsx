@@ -1,20 +1,32 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Mic, Image, VideoIcon, Share2, PanelRightOpen } from "lucide-react";
+import { Send, Mic, Image, VideoIcon, Share2, PanelRightOpen, Camera, MonitorUp, Upload, Update } from "lucide-react";
+import SimplePeer from "simple-peer";
 
 interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
   timestamp: Date;
+  type?: "text" | "image" | "file";
+  fileUrl?: string;
 }
 
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isVideoActive, setIsVideoActive] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const screenRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -24,11 +36,39 @@ export const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
+  const callMistralAPI = async (prompt: string) => {
+    try {
+      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "mistral-large-2.0",
+          messages: [
+            {
+              role: "system",
+              content: "You are a friendly, comedic AI assistant that uses emojis and helps users with advanced reasoning, deep thinking, and experimental features. You can analyze content, provide explanations, and assist with various tasks in a fun way."
+            },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error("Error calling Mistral API:", error);
+      return "Oops! 😅 I had a small hiccup. Let me try again! 🔄";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
@@ -41,32 +81,132 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // TODO: Implement Mistral AI API call here
-      // For now, simulate a response
-      setTimeout(() => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: "Hey there! 👋 I'm your AI assistant. I'm still being configured, but I'll be ready to help you soon! 🚀",
-          role: "assistant",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 1000);
+      const response = await callMistralAPI(input);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        role: "assistant",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error:", error);
+    } finally {
       setIsLoading(false);
     }
   };
+
+  const startVoiceCall = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMediaStream(stream);
+      setIsVoiceActive(true);
+      // Here we would initialize real-time voice communication with AI
+      // For now, we'll just show the audio controls
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+    }
+  };
+
+  const startVideoCall = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setMediaStream(stream);
+      setIsVideoActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+    }
+  };
+
+  const startScreenShare = async () => {
+    try {
+      // @ts-ignore - TypeScript doesn't recognize getDisplayMedia
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      setScreenStream(stream);
+      setIsScreenSharing(true);
+      if (screenRef.current) {
+        screenRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error("Error sharing screen:", error);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const fileUrl = e.target?.result as string;
+        const fileMessage: Message = {
+          id: Date.now().toString(),
+          content: `Shared file: ${file.name}`,
+          role: "user",
+          timestamp: new Date(),
+          type: "file",
+          fileUrl,
+        };
+        setMessages((prev) => [...prev, fileMessage]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const stopMediaStream = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setMediaStream(null);
+      setIsVoiceActive(false);
+      setIsVideoActive(false);
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+      setIsScreenSharing(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopMediaStream();
+    };
+  }, []);
 
   return (
     <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[80vh] flex flex-col">
       <div className="p-4 border-b border-glass-border bg-purple-900/20">
         <h2 className="text-xl font-semibold">SageX AI Assistant</h2>
-        <p className="text-sm text-gray-400">Powered by Mistral AI</p>
+        <p className="text-sm text-gray-400">Powered by Mistral AI Large 2</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Media streams */}
+        {(isVideoActive || isScreenSharing) && (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {isVideoActive && (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full rounded-lg bg-black"
+              />
+            )}
+            {isScreenSharing && (
+              <video
+                ref={screenRef}
+                autoPlay
+                playsInline
+                className="w-full rounded-lg bg-black"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Messages */}
         {messages.map((message) => (
           <motion.div
             key={message.id}
@@ -83,7 +223,14 @@ export const ChatInterface = () => {
                   : "bg-glass text-white"
               }`}
             >
-              {message.content}
+              {message.type === "file" ? (
+                <div className="flex items-center space-x-2">
+                  <Upload size={20} />
+                  <span>{message.content}</span>
+                </div>
+              ) : (
+                message.content
+              )}
             </div>
           </motion.div>
         ))}
@@ -102,31 +249,56 @@ export const ChatInterface = () => {
       </div>
 
       <div className="p-4 border-t border-glass-border">
-        <form onSubmit={handleSubmit} className="flex items-center space-x-4">
+        <div className="flex space-x-4 mb-4">
           <button
             type="button"
-            className="p-2 text-gray-400 hover:text-white transition-colors"
+            onClick={() => isVoiceActive ? stopMediaStream() : startVoiceCall()}
+            className={`p-2 rounded-lg transition-colors ${
+              isVoiceActive ? "bg-red-500 text-white" : "text-gray-400 hover:text-white"
+            }`}
           >
             <Mic size={20} />
           </button>
           <button
             type="button"
+            onClick={() => isVideoActive ? stopMediaStream() : startVideoCall()}
+            className={`p-2 rounded-lg transition-colors ${
+              isVideoActive ? "bg-red-500 text-white" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Camera size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={() => isScreenSharing ? stopMediaStream() : startScreenShare()}
+            className={`p-2 rounded-lg transition-colors ${
+              isScreenSharing ? "bg-red-500 text-white" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <MonitorUp size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="p-2 text-gray-400 hover:text-white transition-colors"
           >
-            <Image size={20} />
+            <Upload size={20} />
           </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            className="hidden"
+          />
           <button
             type="button"
             className="p-2 text-gray-400 hover:text-white transition-colors"
           >
-            <VideoIcon size={20} />
+            <Update size={20} />
           </button>
-          <button
-            type="button"
-            className="p-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <Share2 size={20} />
-          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex items-center space-x-4">
           <input
             type="text"
             value={input}
