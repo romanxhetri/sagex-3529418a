@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Mic, Image, VideoIcon, Share2, PanelRightOpen, Camera, MonitorUp, Upload, Update } from "lucide-react";
+import { Send, Mic, Image, VideoIcon, Share2, PanelRightOpen, Camera, MonitorUp, Upload, RefreshCw } from "lucide-react";
 import SimplePeer from "simple-peer";
 
 interface Message {
@@ -294,7 +294,7 @@ export const ChatInterface = () => {
             type="button"
             className="p-2 text-gray-400 hover:text-white transition-colors"
           >
-            <Update size={20} />
+            <RefreshCw size={20} />
           </button>
         </div>
 
