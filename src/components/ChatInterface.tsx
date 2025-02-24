@@ -42,20 +42,26 @@ export const ChatInterface = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
+          Authorization: `Bearer ffF0FI3Cxp8iNPJpuCjDjqWZcSjCKBf8`,
         },
         body: JSON.stringify({
           model: "mistral-large-2.0",
           messages: [
             {
               role: "system",
-              content: "You are a friendly, comedic AI assistant that uses emojis and helps users with advanced reasoning, deep thinking, and experimental features. You can analyze content, provide explanations, and assist with various tasks in a fun way."
+              content: "You are a friendly, comedic AI assistant that uses emojis and helps users with advanced reasoning, deep thinking, and experimental features. You can analyze content, provide explanations, and assist with various tasks in a fun way. Always respond with emojis and in a comedic tone."
             },
             { role: "user", content: prompt }
           ],
           temperature: 0.7,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Mistral API error:", errorData);
+        throw new Error(`API error: ${response.status}`);
+      }
 
       const data = await response.json();
       return data.choices[0].message.content;
