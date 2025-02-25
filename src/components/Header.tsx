@@ -3,9 +3,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Nav3D } from "./Nav3D";
+import { Nav2D } from "./Nav3D";
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -21,54 +19,54 @@ export const Header = () => {
   }, []);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-glass-dark backdrop-blur-lg border-b border-glass-border"
-            : ""
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/">
-              <motion.div
-                className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                SageX
-              </motion.div>
-            </Link>
-
-            <button
-              className="md:hidden text-white"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+    <motion.header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled || isMenuOpen
+          ? "bg-glass-dark backdrop-blur-lg border-b border-glass-border"
+          : ""
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/">
+            <motion.div
+              className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
+              SageX
+            </motion.div>
+          </Link>
 
-        {isMenuOpen && (
-          <motion.div
-            className="md:hidden bg-glass-dark backdrop-blur-lg border-t border-glass-border"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <button
+            className="text-white"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <div className="px-4 py-4 space-y-4">
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {isMenuOpen && (
+        <motion.div
+          className="bg-glass-dark backdrop-blur-lg border-t border-glass-border"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="container mx-auto px-4 py-4">
+            <Nav2D />
+            <div className="mt-4 pt-4 border-t border-glass-border">
               <button className="w-full px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-medium transition-all duration-300">
                 Get Started
               </button>
             </div>
-          </motion.div>
-        )}
-      </motion.header>
-      <Nav3D />
-    </DndProvider>
+          </div>
+        </motion.div>
+      )}
+    </motion.header>
   );
 };
