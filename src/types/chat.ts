@@ -6,6 +6,8 @@ export interface Message {
   timestamp: Date;
   type?: "text" | "image" | "file";
   fileUrl?: string;
+  suggestedQuestions?: string[];
+  language?: string;
 }
 
 export interface Capability {
@@ -14,4 +16,20 @@ export interface Capability {
   icon: React.ReactNode;
   enabled: boolean;
   description: string;
+}
+
+export interface AIFeatures {
+  contextualMemory: boolean;
+  multimodalProcessing: boolean;
+  logicalReasoning: boolean;
+  realTimeSearch: boolean;
+  safeMode: boolean;
+}
+
+export type SupportedLanguage = "en" | "ne" | "hi" | "es" | "fr" | "de" | "ja" | "ko" | "zh";
+
+export interface LanguageOption {
+  code: SupportedLanguage;
+  name: string;
+  nativeName: string;
 }

@@ -6,6 +6,11 @@ import { CapabilitiesDisplay } from "./chat/CapabilitiesDisplay";
 import { MediaControls } from "./chat/MediaControls";
 import { Message, Capability } from "@/types/chat";
 import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
+import { languages, translateToLanguage } from '@/utils/languages';
+import { LanguageSelector } from './chat/LanguageSelector';
+import { SuggestedQuestions } from './chat/SuggestedQuestions';
+import { pipeline } from '@huggingface/transformers';
+import type { SupportedLanguage } from '@/types/chat';
 
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,6 +23,14 @@ export const ChatInterface = () => {
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isReasoningMinimized, setIsReasoningMinimized] = useState(false);
   const [currentThought, setCurrentThought] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("en");
+  const [aiFeatures, setAIFeatures] = useState<AIFeatures>({
+    contextualMemory: true,
+    multimodalProcessing: true,
+    logicalReasoning: true,
+    realTimeSearch: true,
+    safeMode: true
+  });
   const { toast } = useToast();
   
   const [capabilities, setCapabilities] = useState<Capability[]>([
@@ -90,16 +103,51 @@ export const ChatInterface = () => {
     });
   };
 
+  const generateSuggestedQuestions = (content: string) => {
+    return [
+      "Tell me more about this topic 🤔",
+      "What are the key benefits? 🎯",
+      "Can you explain it in simpler terms? 📚",
+      "What are some real-world examples? 🌍"
+    ];
+  };
+
+  const processScreenContent = async (videoElement: HTMLVideoElement) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(videoElement, 0, 0);
+    
+    const imageClassifier = await pipeline('image-classification');
+    const result = await imageClassifier(canvas.toDataURL());
+    return result.map(r => r.label).join(", ");
+  };
+
+  const handleScreenContent = async () => {
+    if (screenRef.current && screenRef.current.srcObject) {
+      const screenContent = await processScreenContent(screenRef.current);
+      return screenContent;
+    }
+    return "";
+  };
+
   const callMistralAPI = async (prompt: string, context?: string) => {
     try {
-      const enhancedPrompt = context 
-        ? `[Context from screen: ${context}]\n\nUser: ${prompt}`
+      let screenContext = context;
+      if (isScreenSharing && screenRef.current) {
+        screenContext = await handleScreenContent();
+      }
+
+      const enhancedPrompt = screenContext 
+        ? `[Screen Context: ${screenContext}]\n\nUser: ${prompt}`
         : prompt;
 
-      setCurrentThought(`🤔 Analyzing user request and screen context
-🎯 Processing voice input
-🔄 Preparing real-time response
-🗣️ Generating natural voice reply`);
+      if (aiFeatures.realTimeSearch) {
+        setCurrentThought(`🔍 Searching the web for real-time information...
+🤔 Analyzing gathered data...
+🎯 Preparing a comprehensive response...`);
+      }
 
       if (prompt.toLowerCase().includes("who created you") || 
           prompt.toLowerCase().includes("who made you")) {
@@ -387,31 +435,33 @@ export const ChatInterface = () => {
     };
   }, []);
 
+  const handleSuggestedQuestionClick = (question: string) => {
+    setInput(question);
+    handleSubmit(new Event('submit') as React.FormEvent);
+  };
+
   return (
     <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[80vh] flex flex-col">
-      <div className="p-4 border-b border-glass-border bg-purple-900/20">
+      <div className="p-4 border-b border-glass-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="flex space-x-2">
-              {capabilities.map((cap) => (
-                <button
-                  key={cap.id}
-                  onClick={() => toggleCapability(cap.id)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    cap.enabled ? 'text-purple-400' : 'text-gray-500'
-                  } hover:text-purple-300`}
-                  title={cap.name}
-                >
-                  {cap.icon}
-                </button>
-              ))}
-            </div>
+            {capabilities.map((cap) => (
+              <button
+                key={cap.id}
+                onClick={() => toggleCapability(cap.id)}
+                className={`p-2 rounded-lg transition-colors ${
+                  cap.enabled ? 'text-purple-400' : 'text-gray-500'
+                } hover:text-purple-300`}
+                title={cap.name}
+              >
+                {cap.icon}
+              </button>
+            ))}
           </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold">SageX</h2>
-            <p className="text-sm text-gray-400">Created by Roman Xhetri</p>
-          </div>
-          <div className="w-[120px]"></div>
+          <LanguageSelector
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
+          />
         </div>
       </div>
 
@@ -459,27 +509,35 @@ export const ChatInterface = () => {
           onFileUpload={() => fileInputRef.current?.click()}
         />
         
-        <form onSubmit={handleSubmit} className="flex items-center space-x-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             className="hidden"
           />
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 bg-glass rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="p-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-          >
-            <Send size={20} />
-          </button>
+          <div className="flex items-center space-x-4">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={`Ask anything in ${languages.find(l => l.code === selectedLanguage)?.name}...`}
+              className="flex-1 bg-glass rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="p-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              <Send size={20} />
+            </button>
+          </div>
+          {messages.length > 0 && (
+            <SuggestedQuestions
+              questions={generateSuggestedQuestions(messages[messages.length - 1].content)}
+              onQuestionClick={handleSuggestedQuestionClick}
+            />
+          )}
         </form>
       </div>
     </div>
