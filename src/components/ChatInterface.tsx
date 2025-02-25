@@ -90,12 +90,16 @@ export const ChatInterface = () => {
     });
   };
 
-  const callMistralAPI = async (prompt: string) => {
+  const callMistralAPI = async (prompt: string, context?: string) => {
     try {
-      setCurrentThought(`🤔 Analyzing the user's request: "${prompt}"
-🎭 Preparing to respond in a friendly tone
-🔄 Accessing my knowledge base
-🎯 Formulating a helpful response`);
+      const enhancedPrompt = context 
+        ? `[Context from screen: ${context}]\n\nUser: ${prompt}`
+        : prompt;
+
+      setCurrentThought(`🤔 Analyzing user request and screen context
+🎯 Processing voice input
+🔄 Preparing real-time response
+🗣️ Generating natural voice reply`);
 
       if (prompt.toLowerCase().includes("who created you") || 
           prompt.toLowerCase().includes("who made you")) {
@@ -119,7 +123,7 @@ export const ChatInterface = () => {
           model: "mistral-medium",
           messages: [
             { role: "system", content: systemMessage },
-            { role: "user", content: prompt }
+            { role: "user", content: enhancedPrompt }
           ],
           temperature: 0.7,
           max_tokens: 2000,
@@ -193,7 +197,7 @@ export const ChatInterface = () => {
       
       toast({
         title: "Voice activated",
-        description: "Your microphone is now active",
+        description: "Your microphone is now active for real-time conversation",
       });
 
       if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -202,6 +206,7 @@ export const ChatInterface = () => {
         
         recognition.continuous = true;
         recognition.interimResults = true;
+        recognition.lang = 'en-US';
         
         recognition.onresult = async (event) => {
           const transcript = Array.from(event.results)
@@ -218,7 +223,13 @@ export const ChatInterface = () => {
             };
             
             setMessages(prev => [...prev, userMessage]);
-            const response = await callMistralAPI(transcript);
+
+            let screenContext = "";
+            if (screenStream) {
+              screenContext = "User is on the search page viewing content";
+            }
+
+            const response = await callMistralAPI(transcript, screenContext);
             
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
@@ -229,9 +240,23 @@ export const ChatInterface = () => {
             
             setMessages(prev => [...prev, assistantMessage]);
             
-            const utterance = new SpeechSynthesisUtterance(response);
-            window.speechSynthesis.speak(utterance);
+            if (window.speechSynthesis) {
+              const utterance = new SpeechSynthesisUtterance(response);
+              utterance.rate = 1.0; // Normal speaking rate
+              utterance.pitch = 1.0; // Normal pitch
+              utterance.volume = 1.0; // Full volume
+              window.speechSynthesis.speak(utterance);
+            }
           }
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          toast({
+            title: "Voice Recognition Error",
+            description: `Error: ${event.error}. Please try again.`,
+            variant: "destructive",
+          });
         };
         
         recognition.start();
@@ -262,7 +287,7 @@ export const ChatInterface = () => {
 
       toast({
         title: "Video activated",
-        description: "Your camera is now active",
+        description: "Your camera is now active for AI assistance",
       });
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -296,7 +321,7 @@ export const ChatInterface = () => {
 
       toast({
         title: "Screen share activated",
-        description: "Your screen is now being shared",
+        description: "Your screen is now being analyzed for AI assistance",
       });
 
       stream.getVideoTracks()[0].onended = () => {
