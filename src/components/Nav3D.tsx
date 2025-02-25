@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useDrag } from 'react-dnd';
-import { motion } from 'framer-motion';
+import { motion, PanInfo } from 'framer-motion';
 import * as THREE from 'three';
 import { Link } from 'react-router-dom';
 import { 
@@ -121,14 +121,15 @@ export const Nav3D = () => {
       }),
     }));
 
-    const handleDrag = (e: React.DragEvent) => {
+    const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       const newItems = items.map((i) => {
         if (i.id === item.id) {
+          const rect = (event.target as HTMLElement).getBoundingClientRect();
           return {
             ...i,
             position: {
-              x: e.clientX,
-              y: e.clientY,
+              x: rect.left + info.offset.x,
+              y: rect.top + info.offset.y,
             },
           };
         }
