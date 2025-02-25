@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -66,9 +65,18 @@ export const ChatInterface = () => {
     }
   ]);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const toggleCapability = (id: string) => {
     setCapabilities(caps => 
@@ -85,11 +93,21 @@ export const ChatInterface = () => {
   const callMistralAPI = async (prompt: string) => {
     try {
       setCurrentThought(`🤔 Analyzing the user's request: "${prompt}"
-🎭 Preparing to respond in a comedic and friendly tone
-🔄 Accessing my knowledge base for relevant information
-🎯 Formulating a response that combines humor with helpfulness`);
+🎭 Preparing to respond in a friendly tone
+🔄 Accessing my knowledge base
+🎯 Formulating a helpful response`);
 
-      const systemMessage = `You are SageX, a friendly and comedic AI assistant that explains its thinking process. When asked about your identity, incorporate humor and emojis while maintaining helpfulness. Always include a clear explanation of your reasoning process.`;
+      if (prompt.toLowerCase().includes("who created you") || 
+          prompt.toLowerCase().includes("who made you")) {
+        return "I was created by Roman Xhetri as part of SageX, an advanced AI assistant platform. 🌟";
+      }
+
+      if (prompt.toLowerCase().includes("which ai are you") || 
+          prompt.toLowerCase().includes("what ai are you")) {
+        return "I am SageX AI, a sophisticated AI assistant designed to help you with various tasks. I aim to provide intelligent, helpful, and friendly assistance! 🤖✨";
+      }
+
+      const systemMessage = `You are SageX, a friendly and intelligent AI assistant. When responding, maintain a helpful and engaging tone while providing clear explanations. You were created by Roman Xhetri.`;
 
       const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -118,7 +136,7 @@ export const ChatInterface = () => {
       return data.choices[0].message.content;
     } catch (error) {
       console.error("Error calling Mistral API:", error);
-      return "Oops! 😅 I had a small hiccup. Let me try again! 🔄\n\nError: " + (error as Error).message;
+      return "I apologize, but I encountered an error. Please try again! 🔄\n\nError: " + (error as Error).message;
     }
   };
 
@@ -281,7 +299,6 @@ export const ChatInterface = () => {
         description: "Your screen is now being shared",
       });
 
-      // Listen for when the user stops sharing
       stream.getVideoTracks()[0].onended = () => {
         stopMediaStream();
       };
@@ -403,6 +420,7 @@ export const ChatInterface = () => {
         )}
 
         <MessageList messages={messages} isLoading={isLoading} />
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="p-4 border-t border-glass-border">
