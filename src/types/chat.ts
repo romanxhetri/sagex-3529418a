@@ -8,6 +8,7 @@ export interface Message {
   fileUrl?: string;
   suggestedQuestions?: string[];
   language?: string;
+  reasoning?: string;  // Added this property
 }
 
 export interface Capability {
