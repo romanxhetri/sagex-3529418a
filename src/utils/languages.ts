@@ -15,11 +15,24 @@ export const languages: LanguageOption[] = [
 ];
 
 export const translateToLanguage = async (text: string, targetLang: string) => {
-  const translator = await pipeline('translation', 'facebook/mbart-large-50-many-to-many-mmt');
-  const result = await translator(text, {
-    max_length: 512,
-    src_lang: "en_XX",
-    tgt_lang: targetLang === "ne" ? "ne_NP" : `${targetLang}_XX`
-  });
-  return typeof result === 'string' ? result : result[0].text || text;
+  try {
+    const translator = await pipeline('translation', 'facebook/mbart-large-50-many-to-many-mmt');
+    const result = await translator(text, {
+      max_length: 512,
+      language: targetLang === "ne" ? "ne_NP" : `${targetLang}_XX`,
+    });
+
+    if (Array.isArray(result)) {
+      return result[0]?.generated_text || text;
+    }
+    
+    if (typeof result === 'object' && 'generated_text' in result) {
+      return result.generated_text;
+    }
+
+    return text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text;
+  }
 };
