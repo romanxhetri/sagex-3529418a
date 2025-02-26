@@ -264,12 +264,8 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      let response = await callMistralAPI(input);
+      const response = await callMistralAPI(input);
       
-      if (selectedLanguage !== "en") {
-        response = await translateToLanguage(response, selectedLanguage);
-      }
-
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
