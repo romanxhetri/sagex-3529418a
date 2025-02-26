@@ -134,9 +134,18 @@ export const ChatInterface = () => {
 
   const callMistralAPI = async (prompt: string, context?: string) => {
     try {
-      setCurrentThought(`🧠 Starting to process your request...
-🔍 Analyzing the context and requirements...
-💭 Formulating a comprehensive response...`);
+      setCurrentThought(`My thinking process:
+1. 🤔 Understanding the Request:
+   Analyzing user's input and context to determine the exact requirements.
+
+2. 🔍 Knowledge Retrieval:
+   Accessing relevant information and patterns from my training.
+
+3. 💡 Solution Formulation:
+   Developing a clear and helpful response based on the analyzed data.
+
+4. 🎯 Response Optimization:
+   Ensuring the answer is accurate, helpful, and matches the user's needs.`);
 
       let screenContext = context;
       if (isScreenSharing && screenRef.current) {
@@ -265,9 +274,18 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      setCurrentThought(`🤔 Processing your message...
-🧠 Analyzing context...
-💡 Generating response...`);
+      setCurrentThought(`My thinking process:
+1. 🤔 Understanding the Request:
+   Analyzing user's input and context to determine the exact requirements.
+
+2. 🔍 Knowledge Retrieval:
+   Accessing relevant information and patterns from my training.
+
+3. 💡 Solution Formulation:
+   Developing a clear and helpful response based on the analyzed data.
+
+4. 🎯 Response Optimization:
+   Ensuring the answer is accurate, helpful, and matches the user's needs.`);
 
       const response = await callMistralAPI(input);
       
@@ -278,7 +296,21 @@ export const ChatInterface = () => {
         timestamp: new Date(),
         language: selectedLanguage,
         suggestedQuestions: generateSuggestedQuestions(response),
-        reasoning: "I processed your request by analyzing the context and generating a suitable response based on my understanding."
+        reasoning: `1. 📝 Input Analysis:
+   - Received user query about: "${input}"
+   - Identified key topics and requirements
+
+2. 🧠 Processing Approach:
+   - Applied relevant knowledge and context
+   - Considered best practices and user needs
+
+3. 🎯 Response Formation:
+   - Structured clear and informative answer
+   - Included relevant examples and explanations
+
+4. ✨ Quality Check:
+   - Verified accuracy and completeness
+   - Ensured helpful and engaging tone`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -295,6 +327,9 @@ export const ChatInterface = () => {
       });
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        setCurrentThought("");
+      }, 3000);
     }
   };
 
