@@ -423,7 +423,10 @@ export const ChatInterface = () => {
 
   const handleSuggestedQuestionClick = (question: string) => {
     setInput(question);
-    handleSubmit(new Event('submit') as React.FormEvent);
+    const syntheticEvent = {
+      preventDefault: () => {},
+    } as React.FormEvent<HTMLFormElement>;
+    handleSubmit(syntheticEvent);
   };
 
   return (
