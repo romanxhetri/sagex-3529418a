@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageList } from "./chat/MessageList";
 import { CapabilitiesDisplay } from "./chat/CapabilitiesDisplay";
 import { MediaControls } from "./chat/MediaControls";
-import { Message, Capability } from "@/types/chat";
+import { Message, Capability, AIFeatures } from "@/types/chat";
 import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
 import { languages, translateToLanguage } from '@/utils/languages';
 import { LanguageSelector } from './chat/LanguageSelector';
@@ -192,7 +192,7 @@ export const ChatInterface = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -207,30 +207,28 @@ export const ChatInterface = () => {
     setInput("");
     setIsLoading(true);
 
-    try {
-      const response = await callMistralAPI(input);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response,
-        role: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      if (isVoiceActive) {
-        const utterance = new SpeechSynthesisUtterance(response);
-        window.speechSynthesis.speak(utterance);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
+    callMistralAPI(input)
+      .then(response => {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: response,
+          role: "assistant",
+          timestamp: new Date(),
+          suggestedQuestions: generateSuggestedQuestions(response)
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const startVoiceCall = async () => {

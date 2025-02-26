@@ -8,7 +8,14 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2
+    }
+  }
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

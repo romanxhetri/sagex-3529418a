@@ -1,5 +1,6 @@
 
 import { LanguageOption } from "@/types/chat";
+import { pipeline } from '@huggingface/transformers';
 
 export const languages: LanguageOption[] = [
   { code: "en", name: "English", nativeName: "English" },
@@ -14,9 +15,11 @@ export const languages: LanguageOption[] = [
 ];
 
 export const translateToLanguage = async (text: string, targetLang: string) => {
-  // Using HuggingFace for translation
-  const pipeline = await import('@huggingface/transformers').then(m => m.pipeline);
   const translator = await pipeline('translation', 'facebook/mbart-large-50-many-to-many-mmt');
-  const result = await translator(text, { targetLang });
-  return result[0].translation_text;
+  const result = await translator(text, {
+    max_length: 512,
+    src_lang: "en",
+    tgt_lang: targetLang
+  });
+  return typeof result === 'string' ? result : result[0].text || text;
 };
