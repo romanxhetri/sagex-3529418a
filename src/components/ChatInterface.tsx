@@ -134,6 +134,10 @@ export const ChatInterface = () => {
 
   const callMistralAPI = async (prompt: string, context?: string) => {
     try {
+      setCurrentThought(`🧠 Starting to process your request...
+🔍 Analyzing the context and requirements...
+💭 Formulating a comprehensive response...`);
+
       let screenContext = context;
       if (isScreenSharing && screenRef.current) {
         screenContext = await handleScreenContent();
@@ -146,17 +150,8 @@ export const ChatInterface = () => {
       if (aiFeatures.realTimeSearch) {
         setCurrentThought(`🔍 Searching the web for real-time information...
 🤔 Analyzing gathered data...
-🎯 Preparing a comprehensive response...`);
-      }
-
-      if (prompt.toLowerCase().includes("who created you") || 
-          prompt.toLowerCase().includes("who made you")) {
-        return "I was created by Roman Xhetri as part of SageX, an advanced AI assistant platform. 🌟";
-      }
-
-      if (prompt.toLowerCase().includes("which ai are you") || 
-          prompt.toLowerCase().includes("what ai are you")) {
-        return "I am SageX AI, a sophisticated AI assistant designed to help you with various tasks. I aim to provide intelligent, helpful, and friendly assistance! 🤖✨";
+🎯 Preparing a comprehensive response...
+🧠 Integrating all information...`);
       }
 
       const systemMessage = `You are SageX, a friendly and intelligent AI assistant. When responding, maintain a helpful and engaging tone while providing clear explanations. You were created by Roman Xhetri.`;
@@ -185,9 +180,15 @@ export const ChatInterface = () => {
       }
 
       const data = await response.json();
+      
+      setTimeout(() => {
+        setCurrentThought("");
+      }, 3000);
+      
       return data.choices[0].message.content;
     } catch (error) {
       console.error("Error calling Mistral API:", error);
+      setCurrentThought("❌ Encountered an error while processing your request...");
       return "I apologize, but I encountered an error. Please try again! 🔄\n\nError: " + (error as Error).message;
     }
   };
@@ -264,6 +265,10 @@ export const ChatInterface = () => {
     setIsLoading(true);
 
     try {
+      setCurrentThought(`🤔 Processing your message...
+🧠 Analyzing context...
+💡 Generating response...`);
+
       const response = await callMistralAPI(input);
       
       const assistantMessage: Message = {
@@ -272,7 +277,8 @@ export const ChatInterface = () => {
         role: "assistant",
         timestamp: new Date(),
         language: selectedLanguage,
-        suggestedQuestions: generateSuggestedQuestions(response)
+        suggestedQuestions: generateSuggestedQuestions(response),
+        reasoning: "I processed your request by analyzing the context and generating a suitable response based on my understanding."
       };
 
       setMessages(prev => [...prev, assistantMessage]);
