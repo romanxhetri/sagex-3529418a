@@ -19,15 +19,15 @@ export const translateToLanguage = async (text: string, targetLang: string) => {
     const translator = await pipeline('translation', 'facebook/mbart-large-50-many-to-many-mmt');
     const result = await translator(text, {
       max_length: 512,
-      language: targetLang === "ne" ? "ne_NP" : `${targetLang}_XX`,
+      forced_bos_token_id: targetLang === "ne" ? "ne_NP" : `${targetLang}_XX`,
     });
 
     if (Array.isArray(result)) {
-      return result[0]?.generated_text || text;
+      return result[0]?.translation || text;
     }
     
-    if (typeof result === 'object' && 'generated_text' in result) {
-      return result.generated_text;
+    if (typeof result === 'object' && result !== null) {
+      return 'translation' in result ? result.translation : text;
     }
 
     return text;
