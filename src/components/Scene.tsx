@@ -88,7 +88,10 @@ export const Scene: React.FC = () => {
       "position",
       new THREE.BufferAttribute(firePositions, 3)
     );
-    fireGeometry.setAttribute("color", new THREE.BufferAttribute(fireColors, 3));
+    fireGeometry.setAttribute(
+      "color",
+      new THREE.BufferAttribute(fireColors, 3)
+    );
 
     const fireMaterial = new THREE.PointsMaterial({
       size: 0.1,
@@ -101,30 +104,8 @@ export const Scene: React.FC = () => {
     fire.position.set(-20, -10, -20);
     scene.add(fire);
 
-    // Create background particles
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particlesCount = 5000;
-    const posArray = new Float32Array(particlesCount * 3);
-
-    for (let i = 0; i < particlesCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 5;
-    }
-
-    particlesGeometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(posArray, 3)
-    );
-
-    const particlesMaterial = new THREE.PointsMaterial({
-      size: 0.005,
-      color: 0x8a2be2,
-    });
-
-    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particlesMesh);
-
     // Position camera
-    camera.position.z = 3;
+    camera.position.z = 5;
 
     // Thunder effect timer
     let lastThunderTime = 0;
@@ -164,9 +145,6 @@ export const Scene: React.FC = () => {
         lastThunderTime = time;
       }
 
-      particlesMesh.rotation.y += 0.001;
-      particlesMesh.rotation.x += 0.001;
-
       renderer.render(scene, camera);
     };
 
@@ -182,10 +160,8 @@ export const Scene: React.FC = () => {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      if (mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
       window.removeEventListener("resize", handleResize);
+      mountRef.current?.removeChild(renderer.domElement);
     };
   }, []);
 

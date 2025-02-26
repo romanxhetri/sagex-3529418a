@@ -3,6 +3,7 @@ import React from "react";
 import { Header } from "@/components/Header";
 import { Scene } from "@/components/Scene";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -27,19 +28,19 @@ const Index = () => {
           </motion.span>
 
           <motion.h1
-            className="text-5xl md:text-7xl font-bold leading-tight"
+            className="text-5xl md:text-7xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
             Experience Magic with{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse">
               SageX
             </span>
           </motion.h1>
 
           <motion.p
-            className="text-xl text-gray-400 max-w-2xl mx-auto"
+            className="text-xl text-gradient-multi max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -54,12 +55,12 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
           >
-            <button className="px-8 py-3 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-medium transition-all duration-300 animate-glow">
-              Get Started
-            </button>
-            <button className="px-8 py-3 border border-glass-border bg-glass hover:bg-glass-dark rounded-full text-white font-medium transition-all duration-300">
-              Learn More
-            </button>
+            <Link 
+              to="/chat"
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full text-white font-medium transition-all duration-300 animate-glow transform hover:scale-105"
+            >
+              Chat with SageX 🤖
+            </Link>
           </motion.div>
         </motion.div>
       </main>

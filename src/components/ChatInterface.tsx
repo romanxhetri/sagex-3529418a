@@ -192,7 +192,62 @@ export const ChatInterface = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSpeechToText = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      toast({
+        title: "Error",
+        description: "Speech recognition is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = selectedLanguage === "ne" ? "ne-NP" : "en-US";
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+
+      setInput(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+    };
+
+    recognition.start();
+    setIsVoiceActive(true);
+
+    return () => {
+      recognition.stop();
+      setIsVoiceActive(false);
+    };
+  };
+
+  const textToSpeech = (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      toast({
+        title: "Error",
+        description: "Text to speech is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedLanguage === "ne" ? "ne-NP" : "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -201,119 +256,52 @@ export const ChatInterface = () => {
       content: input,
       role: "user",
       timestamp: new Date(),
+      language: selectedLanguage
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-    callMistralAPI(input)
-      .then(response => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: response,
-          role: "assistant",
-          timestamp: new Date(),
-          suggestedQuestions: generateSuggestedQuestions(response)
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-      })
-      .catch(error => {
-        console.error("Error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to send message. Please try again.",
-          variant: "destructive",
-        });
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
-
-  const startVoiceCall = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true,
-        video: false 
-      });
+      let response = await callMistralAPI(input);
       
-      setMediaStream(stream);
-      setIsVoiceActive(true);
-      
-      toast({
-        title: "Voice activated",
-        description: "Your microphone is now active for real-time conversation",
-      });
+      if (selectedLanguage !== "en") {
+        response = await translateToLanguage(response, selectedLanguage);
+      }
 
-      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onresult = async (event) => {
-          const transcript = Array.from(event.results)
-            .map(result => result[0])
-            .map(result => result.transcript)
-            .join('');
-          
-          if (event.results[0].isFinal) {
-            const userMessage: Message = {
-              id: Date.now().toString(),
-              content: transcript,
-              role: "user",
-              timestamp: new Date(),
-            };
-            
-            setMessages(prev => [...prev, userMessage]);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        role: "assistant",
+        timestamp: new Date(),
+        language: selectedLanguage,
+        suggestedQuestions: generateSuggestedQuestions(response)
+      };
 
-            let screenContext = "";
-            if (screenStream) {
-              screenContext = "User is on the search page viewing content";
-            }
+      setMessages(prev => [...prev, assistantMessage]);
 
-            const response = await callMistralAPI(transcript, screenContext);
-            
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: response,
-              role: "assistant",
-              timestamp: new Date(),
-            };
-            
-            setMessages(prev => [...prev, assistantMessage]);
-            
-            if (window.speechSynthesis) {
-              const utterance = new SpeechSynthesisUtterance(response);
-              utterance.rate = 1.0; // Normal speaking rate
-              utterance.pitch = 1.0; // Normal pitch
-              utterance.volume = 1.0; // Full volume
-              window.speechSynthesis.speak(utterance);
-            }
-          }
-        };
-
-        recognition.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          toast({
-            title: "Voice Recognition Error",
-            description: `Error: ${event.error}. Please try again.`,
-            variant: "destructive",
-          });
-        };
-        
-        recognition.start();
+      if (isVoiceActive) {
+        textToSpeech(response);
       }
     } catch (error) {
-      console.error("Error accessing microphone:", error);
+      console.error("Error:", error);
       toast({
         title: "Error",
-        description: "Failed to access microphone. Please check your permissions.",
+        description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startVoiceCall = () => {
+    if (isVoiceActive) {
+      window.speechSynthesis.cancel();
+      setIsVoiceActive(false);
+    } else {
+      handleSpeechToText();
     }
   };
 
