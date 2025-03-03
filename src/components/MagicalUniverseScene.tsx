@@ -1,39 +1,73 @@
 
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 export const MagicalUniverseScene: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const animeModelRef = useRef<THREE.Group | null>(null);
+  const draggingRef = useRef(false);
+  const originalPositionRef = useRef<THREE.Vector3 | null>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
     // Scene setup
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000016);
+    scene.fog = new THREE.FogExp2(0x0c0c1e, 0.001);
+    
     const camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      2000
     );
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    camera.position.set(0, 10, 30);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.5;
     mountRef.current.appendChild(renderer.domElement);
 
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    // Add orbit controls for interactive camera
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 10;
+    controls.maxDistance = 500;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.enabled = false; // Disable by default, enable only when dragging models
+
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
     scene.add(ambientLight);
 
-    // Add directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(5, 5, 5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.position.set(10, 10, 10);
+    directionalLight.castShadow = true;
     scene.add(directionalLight);
+
+    const purpleLight = new THREE.PointLight(0x9900ff, 5, 100);
+    purpleLight.position.set(-20, 15, 10);
+    scene.add(purpleLight);
+
+    const blueLight = new THREE.PointLight(0x0066ff, 5, 100);
+    blueLight.position.set(20, 15, 10);
+    scene.add(blueLight);
 
     // Create stars
     const starGeometry = new THREE.BufferGeometry();
-    const starCount = 10000;
+    const starCount = 15000;
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
+    const starSizes = new Float32Array(starCount);
 
     for (let i = 0; i < starCount * 3; i += 3) {
       starPositions[i] = (Math.random() - 0.5) * 2000;
@@ -42,10 +76,14 @@ export const MagicalUniverseScene: React.FC = () => {
 
       // Create colorful stars
       const color = new THREE.Color();
-      color.setHSL(Math.random(), 0.8, 0.8);
+      const hue = Math.random();
+      color.setHSL(hue, 0.9, 0.7);
       starColors[i] = color.r;
       starColors[i + 1] = color.g;
       starColors[i + 2] = color.b;
+      
+      // Random sizes for stars
+      starSizes[i / 3] = Math.random() * 2 + 0.5;
     }
 
     starGeometry.setAttribute(
@@ -56,30 +94,48 @@ export const MagicalUniverseScene: React.FC = () => {
       "color",
       new THREE.BufferAttribute(starColors, 3)
     );
+    starGeometry.setAttribute(
+      "size",
+      new THREE.BufferAttribute(starSizes, 1)
+    );
 
     const starMaterial = new THREE.PointsMaterial({
-      size: 1.5,
+      size: 2.5,
       vertexColors: true,
       transparent: true,
       opacity: 0.8,
+      sizeAttenuation: true,
     });
 
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
 
     // Create nebulas (colorful clouds)
-    for (let i = 0; i < 5; i++) {
-      const nebulaGeometry = new THREE.SphereGeometry(30, 32, 32);
-      const nebulaMaterial = new THREE.MeshBasicMaterial({
+    for (let i = 0; i < 10; i++) {
+      // Create a more complex geometry for nebulas
+      const nebulaGeometry = new THREE.IcosahedronGeometry(Math.random() * 40 + 20, 2);
+      
+      // Create a shader material for more ethereal look
+      const nebulaMaterial = new THREE.MeshPhongMaterial({
         color: new THREE.Color().setHSL(Math.random(), 0.8, 0.5),
         transparent: true,
         opacity: 0.2,
+        side: THREE.DoubleSide,
+        wireframe: Math.random() > 0.7,
+        emissive: new THREE.Color().setHSL(Math.random(), 0.9, 0.4),
+        emissiveIntensity: 0.5,
       });
+      
       const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
       nebula.position.set(
-        (Math.random() - 0.5) * 500,
-        (Math.random() - 0.5) * 500,
-        (Math.random() - 0.5) * 500
+        (Math.random() - 0.5) * 800,
+        (Math.random() - 0.5) * 800,
+        (Math.random() - 0.5) * 800
+      );
+      nebula.rotation.set(
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
       );
       nebula.scale.set(
         1 + Math.random() * 5,
@@ -87,11 +143,36 @@ export const MagicalUniverseScene: React.FC = () => {
         1 + Math.random() * 5
       );
       scene.add(nebula);
+      
+      // Animate nebulas
+      const nebulaSpeed = Math.random() * 0.0005 + 0.0002;
+      const nebulaDirection = new THREE.Vector3(
+        Math.random() - 0.5,
+        Math.random() - 0.5,
+        Math.random() - 0.5
+      ).normalize();
+      
+      const animateNebula = () => {
+        nebula.rotation.x += nebulaSpeed;
+        nebula.rotation.y += nebulaSpeed * 0.8;
+        nebula.position.addScaledVector(nebulaDirection, nebulaSpeed * 10);
+        
+        // If nebula goes too far, reset its position
+        if (nebula.position.length() > 1000) {
+          nebula.position.set(
+            (Math.random() - 0.5) * 800,
+            (Math.random() - 0.5) * 800,
+            (Math.random() - 0.5) * 800
+          );
+        }
+      };
+      
+      nebulaAnimations.push(animateNebula);
     }
 
     // Add some magical particles
     const particleGeometry = new THREE.BufferGeometry();
-    const particleCount = 3000;
+    const particleCount = 5000;
     const particlePositions = new Float32Array(particleCount * 3);
     const particleColors = new Float32Array(particleCount * 3);
     const particleSpeeds = new Float32Array(particleCount);
@@ -105,22 +186,25 @@ export const MagicalUniverseScene: React.FC = () => {
       const colorChoice = Math.random();
       const color = new THREE.Color();
       
-      if (colorChoice < 0.33) {
+      if (colorChoice < 0.3) {
         // Purple
-        color.setHSL(0.75, 0.8, 0.6);
-      } else if (colorChoice < 0.66) {
+        color.setHSL(0.75, 0.9, 0.7);
+      } else if (colorChoice < 0.6) {
         // Pink
-        color.setHSL(0.85, 0.9, 0.7);
-      } else {
+        color.setHSL(0.85, 0.9, 0.8);
+      } else if (colorChoice < 0.8) {
         // Blue
-        color.setHSL(0.6, 0.8, 0.6);
+        color.setHSL(0.65, 0.9, 0.7);
+      } else {
+        // Gold
+        color.setHSL(0.12, 0.9, 0.6);
       }
       
       particleColors[i] = color.r;
       particleColors[i + 1] = color.g;
       particleColors[i + 2] = color.b;
       
-      particleSpeeds[i / 3] = 0.1 + Math.random() * 0.3;
+      particleSpeeds[i / 3] = 0.1 + Math.random() * 0.4;
     }
 
     particleGeometry.setAttribute(
@@ -133,7 +217,7 @@ export const MagicalUniverseScene: React.FC = () => {
     );
 
     const particleMaterial = new THREE.PointsMaterial({
-      size: 3,
+      size: 4,
       vertexColors: true,
       transparent: true,
       opacity: 0.7,
@@ -143,8 +227,41 @@ export const MagicalUniverseScene: React.FC = () => {
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
-    // Position camera
-    camera.position.z = 100;
+    // Create 3D anime character
+    // Since we can't directly create a 3D model from an image,
+    // we'll use a placeholder and position it nicely
+    const animeCharacterGeometry = new THREE.BoxGeometry(1, 1, 1);
+    animeCharacterGeometry.scale(5, 10, 2);
+    const textureLoader = new THREE.TextureLoader();
+    const animeTexture = textureLoader.load('/lovable-uploads/209d99d5-4f07-4de8-83a8-c13dc829a88b.png');
+    
+    const animeMaterial = new THREE.MeshStandardMaterial({
+      map: animeTexture,
+      transparent: true,
+      roughness: 0.5,
+      metalness: 0.8,
+    });
+    
+    const animeCharacter = new THREE.Mesh(animeCharacterGeometry, animeMaterial);
+    animeCharacter.position.set(0, 0, 0);
+    animeCharacter.castShadow = true;
+    animeCharacter.receiveShadow = true;
+    
+    // Create a group to hold our character for easier manipulation
+    const animeGroup = new THREE.Group();
+    animeGroup.add(animeCharacter);
+    animeGroup.position.set(10, 0, -20);
+    scene.add(animeGroup);
+    animeModelRef.current = animeGroup;
+    originalPositionRef.current = animeGroup.position.clone();
+
+    // Setup drag controls for the anime character
+    let selectedObject: THREE.Object3D | null = null;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // Store all nebula animations
+    const nebulaAnimations: (() => void)[] = [];
 
     // Animation loop
     const animate = () => {
@@ -157,15 +274,110 @@ export const MagicalUniverseScene: React.FC = () => {
       // Animate particles
       const particlePositions = particles.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < particlePositions.length; i += 3) {
-        particlePositions[i + 1] += particleSpeeds[i / 3] * Math.sin(Date.now() * 0.001 + i);
-        particlePositions[i] += particleSpeeds[i / 3] * Math.cos(Date.now() * 0.001 + i);
+        const idx = i / 3;
+        const time = Date.now() * 0.001;
+        particlePositions[i + 1] += particleSpeeds[idx] * Math.sin(time + idx) * 0.1;
+        particlePositions[i] += particleSpeeds[idx] * Math.cos(time + idx) * 0.1;
+        
+        // Reset particles that go too far
+        if (Math.abs(particlePositions[i]) > 500 || Math.abs(particlePositions[i + 1]) > 500 || Math.abs(particlePositions[i + 2]) > 500) {
+          particlePositions[i] = (Math.random() - 0.5) * 1000;
+          particlePositions[i + 1] = (Math.random() - 0.5) * 1000;
+          particlePositions[i + 2] = (Math.random() - 0.5) * 1000;
+        }
       }
       particles.geometry.attributes.position.needsUpdate = true;
+      
+      // Animate nebulas
+      nebulaAnimations.forEach(animateNebula => animateNebula());
+      
+      // Gently float the anime character when not being dragged
+      if (animeModelRef.current && !draggingRef.current) {
+        const time = Date.now() * 0.001;
+        animeModelRef.current.position.y = originalPositionRef.current!.y + Math.sin(time) * 2;
+        animeModelRef.current.rotation.y += 0.005;
+      }
+
+      // Update orbit controls if enabled
+      if (controls.enabled) {
+        controls.update();
+      }
 
       renderer.render(scene, camera);
     };
 
     animate();
+
+    // Mouse event handling for dragging objects
+    const onMouseDown = (event: MouseEvent) => {
+      // Get normalized mouse coordinates
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      // Update the picking ray with the camera and mouse position
+      raycaster.setFromCamera(mouse, camera);
+      
+      // Find intersections
+      const intersects = raycaster.intersectObjects([animeGroup], true);
+      
+      if (intersects.length > 0) {
+        selectedObject = animeGroup;
+        draggingRef.current = true;
+        controls.enabled = true;
+      }
+    };
+    
+    const onMouseMove = (event: MouseEvent) => {
+      if (selectedObject) {
+        // Update mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        // Cast a ray and find the intersection with a plane at Z=0
+        raycaster.setFromCamera(mouse, camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const point = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, point);
+        
+        // Update position of selected object
+        selectedObject.position.copy(point);
+      }
+    };
+    
+    const onMouseUp = () => {
+      if (selectedObject) {
+        // Animate back to original position
+        const originalPos = originalPositionRef.current!;
+        const targetPosition = originalPos.clone();
+        const startPosition = selectedObject.position.clone();
+        const startTime = Date.now();
+        const duration = 1000; // 1 second
+        
+        const animateReturn = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Ease out cubic: progress = 1 - (1 - progress)^3
+          const easeProgress = 1 - Math.pow(1 - progress, 3);
+          
+          selectedObject!.position.lerpVectors(startPosition, targetPosition, easeProgress);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateReturn);
+          } else {
+            draggingRef.current = false;
+          }
+        };
+        
+        animateReturn();
+        selectedObject = null;
+        controls.enabled = false;
+      }
+    };
+    
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
 
     // Handle resize
     const handleResize = () => {
@@ -178,6 +390,9 @@ export const MagicalUniverseScene: React.FC = () => {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
       mountRef.current?.removeChild(renderer.domElement);
     };
   }, []);

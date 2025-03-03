@@ -82,7 +82,7 @@ export const AppIntro = () => {
           transition={{ duration: 1, delay: 0.5 }}
         >
           <img 
-            src="/lovable-uploads/8e26f290-a71d-4502-acd6-40a1ee8e2d0e.png" 
+            src="/lovable-uploads/209d99d5-4f07-4de8-83a8-c13dc829a88b.png" 
             alt="AI Assistant" 
             className="h-80 object-contain drop-shadow-[0_0_15px_rgba(255,0,255,0.7)]"
           />
