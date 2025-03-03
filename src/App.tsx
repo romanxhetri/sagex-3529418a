@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Laptops from "./pages/Laptops";
 import Mobiles from "./pages/Mobiles";
+import Updates from "./pages/Updates";
 import NotFound from "./pages/NotFound";
 import { AppIntro } from "./components/AppIntro";
 
@@ -45,6 +46,7 @@ const App = () => {
             <Route path="/chat" element={<Chat />} />
             <Route path="/laptops" element={<Laptops />} />
             <Route path="/mobiles" element={<Mobiles />} />
+            <Route path="/updates" element={<Updates />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

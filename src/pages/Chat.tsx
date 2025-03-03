@@ -1,16 +1,37 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { MagicalUniverseScene } from "@/components/MagicalUniverseScene";
 import { ChatInterface } from "@/components/ChatInterface";
 import { motion } from "framer-motion";
 import { Laptop, Smartphone, Sparkles, Download, Headphones } from "lucide-react";
 import { Link } from "react-router-dom";
+import { WeatherEffects } from "@/components/WeatherEffects";
 
 const Chat = () => {
+  const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind">("thunder");
+  
+  useEffect(() => {
+    // Cycle through weather effects every 5 seconds
+    const interval = setInterval(() => {
+      setCurrentWeather(prev => {
+        switch (prev) {
+          case "thunder": return "rain";
+          case "rain": return "fire";
+          case "fire": return "wind";
+          case "wind": return "thunder";
+          default: return "thunder";
+        }
+      });
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
       <MagicalUniverseScene />
+      <WeatherEffects weatherType={currentWeather} />
       <Header />
       
       <main className="container mx-auto px-4 pt-24">

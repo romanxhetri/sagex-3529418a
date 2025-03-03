@@ -1,6 +1,6 @@
 
-import React, { useState, useRef } from "react";
-import { Send } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, ChevronUp, ChevronDown, Sparkle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
 
@@ -21,12 +21,17 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentThought, setCurrentThought] = useState("");
+  const [isReasoningMinimized, setIsReasoningMinimized] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, currentThought, isReasoningMinimized]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,28 +47,67 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setIsReasoningMinimized(false);
     
     try {
-      setCurrentThought(`My thinking process:
-1. 🔍 Analyzing Request:
-   - Parsing user query: "${input}"
-   - Identifying key requirements and preferences
-   - Determining budget constraints if mentioned
+      setCurrentThought(`🧠 *Step-by-Step Analysis for "${input}"*
 
-2. 🧠 Matching Requirements:
-   - Mapping needs to laptop specifications
-   - Considering use cases (gaming, professional, casual)
-   - Prioritizing critical features vs. nice-to-have features
+## 1️⃣ User Request Interpretation
+- Query type: ${input.includes("gaming") ? "Gaming laptop request" : 
+  input.includes("budget") ? "Budget-conscious request" : 
+  input.includes("professional") ? "Professional/Work laptop request" : 
+  "General laptop inquiry"}
+- Budget indicators: ${input.includes("cheap") || input.includes("affordable") ? "Low budget" :
+  input.includes("premium") || input.includes("high-end") ? "High budget" : 
+  input.includes("mid") ? "Mid-range budget" : 
+  "No explicit budget mentioned"}
+- Usage pattern: ${input.includes("gaming") ? "Gaming" : 
+  input.includes("work") || input.includes("professional") ? "Professional work" :
+  input.includes("student") ? "Academic/Student use" :
+  input.includes("video") || input.includes("edit") ? "Media creation" :
+  "General purpose"}
 
-3. 💻 Finding Options:
-   - Searching inventory for matching laptops
-   - Comparing alternatives based on specifications
-   - Ranking results by relevance to user needs
+## 2️⃣ Technical Requirements Analysis
+- Processing needs: ${input.includes("fast") || input.includes("performance") ? "High performance CPU required" :
+  input.includes("basic") ? "Basic processing sufficient" :
+  "Standard processing assumed"}
+- Graphics requirements: ${input.includes("gaming") || input.includes("design") ? "Dedicated GPU recommended" :
+  input.includes("basic") ? "Integrated graphics sufficient" :
+  "Standard graphics assumed"}
+- Memory needs: ${input.includes("multitask") ? "Higher RAM recommended (16GB+)" :
+  input.includes("basic") ? "Standard RAM sufficient (8GB)" :
+  "Default RAM recommendation (8-16GB)"}
+- Storage considerations: ${input.includes("large") || input.includes("storage") ? "Large storage needed (512GB+)" :
+  input.includes("basic") ? "Basic storage sufficient (256GB)" :
+  "Standard storage recommendation (512GB)"}
 
-4. 📊 Preparing Recommendations:
-   - Formatting specs for easy comparison
-   - Highlighting key features that match requirements
-   - Providing reasoning for each recommendation`);
+## 3️⃣ Form Factor Evaluation
+- Portability preference: ${input.includes("light") || input.includes("portable") ? "Lightweight prioritized" :
+  input.includes("desktop") || input.includes("replacement") ? "Performance over portability" :
+  "Balanced portability assumed"}
+- Screen size preference: ${input.includes("small") || input.includes("13") ? "Smaller screen (13-14\")" :
+  input.includes("large") || input.includes("17") ? "Larger screen (17\")" :
+  input.includes("15") ? "Medium screen (15\")" :
+  "Standard screen size (15.6\")"}
+- Battery requirements: ${input.includes("battery") || input.includes("long") ? "Long battery life important" :
+  input.includes("desktop") ? "Battery life less critical" :
+  "Standard battery life assumed"}
+
+## 4️⃣ Brand & Ecosystem Considerations
+- Brand preferences: ${input.includes("Apple") || input.includes("Mac") ? "Apple ecosystem preferred" :
+  input.includes("Windows") ? "Windows ecosystem preferred" :
+  input.includes("Linux") ? "Linux compatibility important" :
+  "No specific ecosystem preference detected"}
+- Brand mentions: ${input.includes("Dell") ? "Dell mentioned" : ""}${input.includes("HP") ? "HP mentioned" : ""}${input.includes("Lenovo") ? "Lenovo mentioned" : ""}${input.includes("Asus") ? "Asus mentioned" : ""}${input.includes("Acer") ? "Acer mentioned" : ""}
+
+## 5️⃣ Recommendation Strategy
+- Primary focus: ${input.includes("performance") ? "Performance optimization" :
+  input.includes("budget") ? "Value for money" :
+  input.includes("battery") ? "Battery efficiency" :
+  input.includes("portable") ? "Portability" :
+  "Balanced recommendations"}
+- Variety approach: Provide 3-5 options across different price points and manufacturers
+- Explanation depth: Include key specifications with brief explanations of why each model matches their needs`);
 
       // Pass the query to the parent component to filter/find laptops
       onRecommendation(input);
@@ -76,25 +120,34 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
         content: "I've analyzed your preferences and found some laptop options that might be a good fit. Check out the recommendations below! Feel free to ask for more specific details about any model.",
         role: "assistant",
         timestamp: new Date(),
-        reasoning: `1. 📝 Request Analysis:
-   - Received query about: "${input}"
-   - Identified key requirements: ${input.includes("gaming") ? "gaming performance" : input.includes("budget") ? "budget-friendly options" : "general purpose use"}
-   - Noted preferences for: ${input.includes("light") ? "portability" : input.includes("power") ? "processing power" : "balanced performance"}
+        reasoning: `## Reasoning Process
 
-2. 🔍 Evaluation Process:
-   - Matched requirements against available laptop database
-   - Prioritized models with ${input.includes("RAM") ? "higher RAM" : input.includes("storage") ? "larger storage" : "balanced specifications"}
-   - Filtered by ${input.includes("price") ? "price range" : "overall value"}
+1. **Query Analysis**
+   - User asked: "${input}"
+   - Identified key requirements: ${input.includes("gaming") ? "gaming capabilities" : input.includes("professional") ? "professional use" : "general purpose computing"}
+   - Budget expectations: ${input.includes("budget") || input.includes("cheap") ? "cost-effective options" : input.includes("premium") ? "high-end models" : "various price points"}
 
-3. 🧮 Technical Assessment:
-   - Evaluated processor capabilities for requested tasks
-   - Considered graphics performance for ${input.includes("design") ? "design work" : input.includes("gaming") ? "gaming" : "everyday tasks"}
-   - Assessed battery life for ${input.includes("travel") ? "travel needs" : "typical usage"}
+2. **Technical Needs Assessment**
+   - CPU requirements: ${input.includes("performance") || input.includes("fast") ? "high-performance processors" : "standard processors"}
+   - Graphics needs: ${input.includes("gaming") || input.includes("design") ? "dedicated graphics" : "integrated graphics"}
+   - Memory recommendations: ${input.includes("multitasking") ? "16GB+ RAM" : "8-16GB RAM"}
+   - Storage considerations: ${input.includes("storage") ? "prioritizing larger storage" : "balanced storage options"}
 
-4. 💡 Recommendation Logic:
-   - Selected laptops that best match overall criteria
-   - Included options at different price points
-   - Provided diverse brand options for comparison`
+3. **User Experience Priorities**
+   - Form factor: ${input.includes("portable") || input.includes("light") ? "emphasizing portability" : "standard form factors"}
+   - Display preferences: ${input.includes("screen") || input.includes("display") ? "quality displays" : "standard displays"}
+   - Battery expectations: ${input.includes("battery") ? "long battery life" : "standard battery performance"}
+
+4. **Market Analysis**
+   - Current top performers in this category: evaluated latest models from major manufacturers
+   - Price-to-performance ratio: optimized selections for value
+   - Reliability factors: considered brand reputation and build quality
+   - Availability: verified current market availability
+
+5. **Final Selection Logic**
+   - Diverse options: provided variety across price points and specifications
+   - Targeted alternatives: included specific options for unique requirements
+   - Comprehensive coverage: ensured all key needs addressed in recommendations`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -107,7 +160,9 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
       });
     } finally {
       setIsLoading(false);
-      setCurrentThought("");
+      setTimeout(() => {
+        setCurrentThought("");
+      }, 3000);
     }
   };
 
@@ -115,16 +170,29 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
     <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[60vh] flex flex-col">
       <div className="p-4 border-b border-glass-border">
         <h3 className="text-lg font-medium text-white">Laptop Assistant</h3>
-        {currentThought && (
-          <div className="mt-2 p-3 bg-purple-900/20 rounded-lg text-sm text-purple-200">
-            <div className="font-medium mb-1 flex items-center">
-              <span className="mr-2">🧠</span>
-              <span>AI Thinking Process:</span>
-            </div>
-            <div className="pl-6 whitespace-pre-wrap">{currentThought}</div>
-          </div>
-        )}
       </div>
+
+      {currentThought && (
+        <div className="border-b border-blue-800/30">
+          <div 
+            className="flex items-center px-4 py-2 cursor-pointer hover:bg-blue-900/20"
+            onClick={() => setIsReasoningMinimized(!isReasoningMinimized)}
+          >
+            <Sparkle className="text-blue-400 mr-2" size={18} />
+            <span className="text-blue-300 font-medium">Show thinking</span>
+            {!isReasoningMinimized ? 
+              <ChevronUp className="ml-2 text-blue-400" size={16} /> : 
+              <ChevronDown className="ml-2 text-blue-400" size={16} />
+            }
+          </div>
+          
+          {!isReasoningMinimized && (
+            <div className="p-4 bg-blue-950/20 text-sm text-white/90 whitespace-pre-wrap">
+              {currentThought}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
@@ -144,15 +212,6 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
               >
                 <div className="whitespace-pre-wrap">{message.content}</div>
               </div>
-              
-              {message.role === "assistant" && message.reasoning && (
-                <div className="flex items-start space-x-2 text-sm text-purple-300 bg-glass/30 p-2 rounded">
-                  <div className="flex-1">
-                    <div className="font-semibold mb-1">Reasoning Process:</div>
-                    <div className="opacity-90 whitespace-pre-wrap">{message.reasoning}</div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         ))}
