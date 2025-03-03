@@ -8,7 +8,7 @@ export interface Message {
   fileUrl?: string;
   suggestedQuestions?: string[];
   language?: string;
-  reasoning?: string;  // Added this property
+  reasoning?: string;
 }
 
 export interface Capability {
@@ -51,4 +51,23 @@ export interface Laptop {
   os: string;
   category: "gaming" | "business" | "student" | "creative" | "budget";
   rating: number;
+}
+
+export interface Mobile {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  imageUrl: string;
+  processor: string;
+  ram: string;
+  storage: string;
+  display: string;
+  camera: string;
+  batteryLife: string;
+  weight: string;
+  os: string;
+  category: "flagship" | "midrange" | "budget";
+  rating: number;
+  features?: string[];
 }

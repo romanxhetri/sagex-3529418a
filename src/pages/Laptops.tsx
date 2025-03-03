@@ -1,11 +1,11 @@
-
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
-import { LaptopScene } from "@/components/LaptopScene";
+import { MagicalUniverseScene } from "@/components/MagicalUniverseScene";
 import { LaptopChat } from "@/components/laptop/LaptopChat";
 import { LaptopList } from "@/components/laptop/LaptopList";
 import { Laptop } from "@/types/chat";
 import { motion } from "framer-motion";
+import { Sparkles, Laptop as LaptopIcon } from "lucide-react";
 
 const laptopData: Laptop[] = [
   {
@@ -172,7 +172,7 @@ const Laptops = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <LaptopScene />
+      <MagicalUniverseScene />
       <Header />
       
       <main className="container mx-auto px-4 pt-24">
@@ -183,11 +183,13 @@ const Laptops = () => {
           className="max-w-6xl mx-auto"
         >
           <div className="mb-8">
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-2">
-              Premium Laptops
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-2 flex items-center">
+              <Sparkles className="mr-2 text-purple-400" />
+              Premium Laptops 💻✨
+              <Sparkles className="ml-2 text-pink-400" />
             </h1>
             <p className="text-gray-300">
-              Find the perfect laptop for your needs with our AI assistant. Tell us what you're looking for, and we'll recommend the best options.
+              Find the perfect laptop for your needs with our AI assistant! Tell us what you're looking for, and we'll recommend the best options. Your perfect tech companion awaits! 🚀
             </p>
           </div>
           
