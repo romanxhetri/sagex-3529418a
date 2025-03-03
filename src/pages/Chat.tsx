@@ -4,6 +4,8 @@ import { Header } from "@/components/Header";
 import { Scene } from "@/components/Scene";
 import { ChatInterface } from "@/components/ChatInterface";
 import { motion } from "framer-motion";
+import { Laptop } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Chat = () => {
   return (
@@ -18,6 +20,14 @@ const Chat = () => {
           transition={{ duration: 0.5 }}
           className="max-w-6xl mx-auto"
         >
+          <Link 
+            to="/laptops"
+            className="mb-6 flex items-center justify-center text-center py-3 px-6 bg-purple-600/30 backdrop-blur-md border border-purple-600/50 rounded-lg text-white hover:bg-purple-600/50 transition-all duration-300 shadow-lg hover:shadow-purple-600/20"
+          >
+            <Laptop className="mr-2" size={20} />
+            <span>Need a new laptop? Try our AI-powered laptop finder!</span>
+          </Link>
+          
           <ChatInterface />
         </motion.div>
       </main>

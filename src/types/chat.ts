@@ -34,3 +34,21 @@ export interface LanguageOption {
   name: string;
   nativeName: string;
 }
+
+export interface Laptop {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  imageUrl: string;
+  processor: string;
+  ram: string;
+  storage: string;
+  display: string;
+  graphics: string;
+  batteryLife: string;
+  weight: string;
+  os: string;
+  category: "gaming" | "business" | "student" | "creative" | "budget";
+  rating: number;
+}
