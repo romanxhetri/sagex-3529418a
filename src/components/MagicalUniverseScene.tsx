@@ -1,6 +1,43 @@
 
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
+// Declare the modules that don't have type declarations
+// When importing from three/examples, we need to use type declarations
+declare module 'three/examples/jsm/loaders/GLTFLoader' {
+  export class GLTFLoader {
+    constructor();
+    load(url: string, onLoad: (gltf: any) => void, onProgress?: (event: ProgressEvent) => void, onError?: (event: ErrorEvent) => void): void;
+    setDRACOLoader(dracoLoader: any): GLTFLoader;
+    parse(data: ArrayBuffer | string, path: string, onLoad: (gltf: any) => void, onError?: (event: ErrorEvent) => void): void;
+  }
+}
+
+declare module 'three/examples/jsm/loaders/DRACOLoader' {
+  export class DRACOLoader {
+    constructor();
+    setDecoderPath(path: string): DRACOLoader;
+    setDecoderConfig(config: object): DRACOLoader;
+    setWorkerLimit(workerLimit: number): DRACOLoader;
+    preload(): DRACOLoader;
+    dispose(): DRACOLoader;
+  }
+}
+
+declare module 'three/examples/jsm/controls/OrbitControls' {
+  export class OrbitControls {
+    constructor(camera: THREE.Camera, domElement?: HTMLElement);
+    enabled: boolean;
+    enableDamping: boolean;
+    dampingFactor: number;
+    screenSpacePanning: boolean;
+    minDistance: number;
+    maxDistance: number;
+    maxPolarAngle: number;
+    update(): void;
+  }
+}
+
+// Import the modules after declaring their types
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -109,6 +146,9 @@ export const MagicalUniverseScene: React.FC = () => {
 
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
+
+    // Store all nebula animations - declare this BEFORE using it
+    const nebulaAnimations: (() => void)[] = [];
 
     // Create nebulas (colorful clouds)
     for (let i = 0; i < 10; i++) {
@@ -259,9 +299,6 @@ export const MagicalUniverseScene: React.FC = () => {
     let selectedObject: THREE.Object3D | null = null;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
-
-    // Store all nebula animations
-    const nebulaAnimations: (() => void)[] = [];
 
     // Animation loop
     const animate = () => {
