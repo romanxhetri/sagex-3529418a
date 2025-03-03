@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Message } from "@/types/chat";
-import { Upload, Brain } from "lucide-react";
+import { Upload } from "lucide-react";
 
 interface MessageListProps {
   messages: Message[];
@@ -55,20 +55,6 @@ export const MessageList = ({ messages, isLoading }: MessageListProps) => {
                 </div>
               )}
             </div>
-            
-            {message.role === "assistant" && message.reasoning && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="flex items-start space-x-2 text-sm text-purple-300 bg-glass/30 p-2 rounded"
-              >
-                <Brain size={16} className="mt-1" />
-                <div className="flex-1">
-                  <div className="font-semibold mb-1">Reasoning Process:</div>
-                  <div className="opacity-90">{message.reasoning}</div>
-                </div>
-              </motion.div>
-            )}
           </div>
         </motion.div>
       ))}

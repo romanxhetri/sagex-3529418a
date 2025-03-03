@@ -134,18 +134,35 @@ export const ChatInterface = () => {
 
   const callMistralAPI = async (prompt: string, context?: string) => {
     try {
-      setCurrentThought(`My thinking process:
-1. 🤔 Understanding the Request:
-   Analyzing user's input and context to determine the exact requirements.
+      setCurrentThought(`The user is asking about: "${prompt}"
+
+Analysis Process:
+1. 🤔 Understanding User Intent:
+   - Query type: ${prompt.includes("how") ? "process/tutorial request" : 
+     prompt.includes("what") ? "definition/explanation request" : 
+     prompt.includes("why") ? "reason/justification request" : "general inquiry"}
+   - Complexity level: ${prompt.length > 100 ? "complex (detailed question)" : 
+     prompt.length > 50 ? "moderate (multi-part question)" : "simple (straightforward question)"}
+   - Technical knowledge required: ${prompt.includes("code") || prompt.includes("programming") ? "high" : "general"}
 
 2. 🔍 Knowledge Retrieval:
-   Accessing relevant information and patterns from my training.
+   - Primary knowledge domains needed: ${prompt.includes("code") ? "programming, software development" : 
+     prompt.includes("science") ? "scientific principles, research" :
+     prompt.includes("history") ? "historical events, figures, contexts" : "general knowledge"}
+   - Context consideration: ${context ? `User shared screen showing: ${context}` : "No additional context provided"}
+   - Potential knowledge gaps to address: ${prompt.includes("latest") || prompt.includes("recent") ? "May need up-to-date information (limited by training data)" : "Standard knowledge should be sufficient"}
 
-3. 💡 Solution Formulation:
-   Developing a clear and helpful response based on the analyzed data.
+3. 💡 Response Formulation:
+   - Structure: intro → main explanation → conclusion/summary
+   - Tone: ${selectedLanguage === "ne" ? "formal but accessible for Nepali speakers" : "friendly and conversational"}
+   - Depth: ${prompt.length > 80 ? "comprehensive with details" : "concise but thorough"}
+   - Examples needed: ${prompt.includes("example") || prompt.includes("instance") ? "yes, provide concrete examples" : "optional"}
 
-4. 🎯 Response Optimization:
-   Ensuring the answer is accurate, helpful, and matches the user's needs.`);
+4. 🎯 Quality Assurance:
+   - Accuracy checks: cross-reference knowledge across domains
+   - Completeness: ensure all aspects of query addressed
+   - Clarity: minimize jargon, provide definitions where needed
+   - Usefulness: ensure practical value in response`);
 
       let screenContext = context;
       if (isScreenSharing && screenRef.current) {
@@ -272,6 +289,7 @@ export const ChatInterface = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setIsReasoningMinimized(false);
 
     try {
       setCurrentThought(`My thinking process:

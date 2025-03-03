@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from "react";
-import { Send } from "lucide-react";
+import { Send, ChevronUp, ChevronDown, Sparkle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
 
@@ -21,6 +21,7 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentThought, setCurrentThought] = useState("");
+  const [isThinkingVisible, setIsThinkingVisible] = useState(true);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,33 +61,37 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setIsThinkingVisible(true);
     
     try {
-      setCurrentThought(`My thinking process:
-1. 🔍 Analyzing Customer Request:
-   - Parsing user query: "${input}"
-   - Detecting preferences: ${input.includes("camera") ? "camera quality important" : 
-     input.includes("battery") ? "battery life priority" : 
-     input.includes("gaming") ? "performance critical" : "general use case"}
-   - Budget considerations: ${input.includes("cheap") ? "budget conscious" : 
-     input.includes("flagship") ? "premium segment" : "mid-range likely"}
+      setCurrentThought(`The user is asking about: "${input}"
 
-2. 🤔 Finding Perfect Match:
-   - Scanning inventory for matches
-   - Running comparison algorithms
-   - Considering additional features user might like
-   - Preparing humorous pitch to make sale more appealing!
+My analysis:
+1. 🔍 Customer Needs Analysis:
+   - Looking for smartphones based on: "${input.includes("camera") ? "camera quality" : 
+     input.includes("battery") ? "battery life" : 
+     input.includes("gaming") ? "performance needs" : "general requirements"}"
+   - Price sensitivity level: ${input.includes("cheap") || input.includes("budget") ? "high (budget-conscious)" : 
+     input.includes("flagship") || input.includes("premium") ? "low (premium segment)" : "medium (mid-range focus)"}
+   - Technical expertise: ${input.includes("technical") || input.includes("specs") ? "high" : "average"}
 
-3. 🎯 Formulating Sales Strategy:
-   - Identifying key selling points
-   - Preparing witty comeback lines
-   - Adding FOMO (Fear Of Missing Out) elements
-   - Planning psychological pricing presentation
+2. 💡 Product Matching Strategy:
+   - Primary features to highlight: ${input.includes("camera") ? "camera megapixels, night mode, optical zoom" : 
+     input.includes("battery") ? "mAh rating, fast charging, battery optimization" : 
+     input.includes("gaming") ? "processor speed, GPU, cooling system, refresh rate" : "balanced feature set"}
+   - Competitor comparison opportunities: ${input.includes("iPhone") || input.includes("Apple") ? "iOS vs Android ecosystem benefits" :
+     input.includes("Samsung") ? "Compare with other Android flagships" : "Highlight unique selling points"}
+   - Upselling potential: ${input.includes("budget") ? "Mid-range features at budget price" : "Premium accessories"}
 
-4. 💡 Finalizing Recommendation:
-   - Building excitement with emojis and enthusiasm
-   - Adding personal touch to recommendation
-   - Preparing for follow-up questions`);
+3. 🎯 Persuasion Approach:
+   - Emotional triggers to use: FOMO, social validation, exclusivity
+   - Communication style: Enthusiastic, humorous, relatable
+   - Decision urgency creators: Limited time offers, low stock warnings, new model arriving soon
+
+4. 🧠 Response Formulation:
+   - Tone: Excited and playful to create positive emotions
+   - Structure: Problem acknowledgment → solution presentation → call to action
+   - Personalization elements: Direct addressing, empathy with specific need`);
 
       // Pass the query to the parent component to filter/find mobiles
       onRecommendation(input);
@@ -148,7 +153,6 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
       });
     } finally {
       setIsLoading(false);
-      setCurrentThought("");
       setTimeout(() => {
         scrollToBottom();
       }, 100);
@@ -163,16 +167,29 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
           Mobile Assistant
           <span className="ml-2">🧙‍♂️</span>
         </h3>
-        {currentThought && (
-          <div className="mt-2 p-3 bg-purple-900/20 rounded-lg text-sm text-purple-200">
-            <div className="font-medium mb-1 flex items-center">
-              <span className="mr-2">🧠</span>
-              <span>AI Thinking Process:</span>
-            </div>
-            <div className="pl-6 whitespace-pre-wrap">{currentThought}</div>
-          </div>
-        )}
       </div>
+
+      {currentThought && (
+        <div className="border-b border-purple-800/30">
+          <div 
+            className="flex items-center px-4 py-2 cursor-pointer hover:bg-purple-900/20"
+            onClick={() => setIsThinkingVisible(!isThinkingVisible)}
+          >
+            <Sparkle className="text-blue-400 mr-2" size={18} />
+            <span className="text-blue-300 font-medium">Show thinking</span>
+            {isThinkingVisible ? 
+              <ChevronUp className="ml-2 text-blue-400" size={16} /> : 
+              <ChevronDown className="ml-2 text-blue-400" size={16} />
+            }
+          </div>
+          
+          {isThinkingVisible && (
+            <div className="p-4 bg-blue-950/20 text-sm text-white/90 whitespace-pre-wrap">
+              {currentThought}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
@@ -192,15 +209,6 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
               >
                 <div className="whitespace-pre-wrap">{message.content}</div>
               </div>
-              
-              {message.role === "assistant" && message.reasoning && (
-                <div className="flex items-start space-x-2 text-sm text-purple-300 bg-glass/30 p-2 rounded">
-                  <div className="flex-1">
-                    <div className="font-semibold mb-1">Reasoning Process:</div>
-                    <div className="opacity-90 whitespace-pre-wrap">{message.reasoning}</div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         ))}

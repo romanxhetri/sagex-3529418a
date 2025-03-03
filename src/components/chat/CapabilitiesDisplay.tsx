@@ -1,55 +1,39 @@
 
 import React from "react";
-import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronUp, ChevronDown, Sparkle } from "lucide-react";
 
-interface ReasoningDisplayProps {
+interface CapabilitiesDisplayProps {
   isMinimized: boolean;
   onToggleMinimize: () => void;
-  currentThought?: string;
+  currentThought: string;
 }
 
-export const CapabilitiesDisplay: React.FC<ReasoningDisplayProps> = ({
+export const CapabilitiesDisplay = ({
   isMinimized,
   onToggleMinimize,
-  currentThought
-}) => {
+  currentThought,
+}: CapabilitiesDisplayProps) => {
   if (!currentThought) return null;
 
   return (
-    <motion.div 
-      initial={{ height: "auto" }}
-      animate={{ height: isMinimized ? "2.5rem" : "auto" }}
-      className="border-b border-glass-border bg-purple-900/10"
-    >
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-400" />
-            Thinking Process
-          </h3>
-          <button
-            onClick={onToggleMinimize}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            {isMinimized ? "Show" : "Hide"} Details
-          </button>
-        </div>
-        
-        {!isMinimized && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="prose prose-invert max-w-none"
-          >
-            <div className="text-sm text-gray-300 space-y-2">
-              {currentThought.split('\n').map((line, i) => (
-                <p key={i} className="leading-relaxed">{line}</p>
-              ))}
-            </div>
-          </motion.div>
-        )}
+    <div className="border-b border-purple-800/30">
+      <div 
+        className="flex items-center px-4 py-2 cursor-pointer hover:bg-purple-900/20"
+        onClick={onToggleMinimize}
+      >
+        <Sparkle className="text-blue-400 mr-2" size={18} />
+        <span className="text-blue-300 font-medium">Show thinking</span>
+        {!isMinimized ? 
+          <ChevronUp className="ml-2 text-blue-400" size={16} /> : 
+          <ChevronDown className="ml-2 text-blue-400" size={16} />
+        }
       </div>
-    </motion.div>
+      
+      {!isMinimized && (
+        <div className="p-4 bg-blue-950/20 text-sm text-white/90 whitespace-pre-wrap">
+          {currentThought}
+        </div>
+      )}
+    </div>
   );
 };
