@@ -28,7 +28,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   return (
     <motion.div 
-      className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800"
+      className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 mb-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

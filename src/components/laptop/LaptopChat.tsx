@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, ChevronUp, ChevronDown, Sparkle } from "lucide-react";
+import { Send, Sparkle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
+import { ReasoningProcess } from "../updates/ReasoningProcess";
 
 interface LaptopChatProps {
   onRecommendation: (query: string) => void;
@@ -173,25 +174,11 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
       </div>
 
       {currentThought && (
-        <div className="border-b border-blue-800/30">
-          <div 
-            className="flex items-center px-4 py-2 cursor-pointer hover:bg-blue-900/20"
-            onClick={() => setIsReasoningMinimized(!isReasoningMinimized)}
-          >
-            <Sparkle className="text-blue-400 mr-2" size={18} />
-            <span className="text-blue-300 font-medium">Show thinking</span>
-            {!isReasoningMinimized ? 
-              <ChevronUp className="ml-2 text-blue-400" size={16} /> : 
-              <ChevronDown className="ml-2 text-blue-400" size={16} />
-            }
-          </div>
-          
-          {!isReasoningMinimized && (
-            <div className="p-4 bg-blue-950/20 text-sm text-white/90 whitespace-pre-wrap">
-              {currentThought}
-            </div>
-          )}
-        </div>
+        <ReasoningProcess 
+          reasoning={currentThought}
+          isMinimized={isReasoningMinimized}
+          onToggle={() => setIsReasoningMinimized(!isReasoningMinimized)}
+        />
       )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

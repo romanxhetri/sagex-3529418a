@@ -1,8 +1,9 @@
 
 import React, { useState, useRef } from "react";
-import { Send, ChevronUp, ChevronDown, Sparkle } from "lucide-react";
+import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
+import { ReasoningProcess } from "../updates/ReasoningProcess";
 
 interface MobileChatProps {
   onRecommendation: (query: string) => void;
@@ -170,25 +171,11 @@ My analysis:
       </div>
 
       {currentThought && (
-        <div className="border-b border-purple-800/30">
-          <div 
-            className="flex items-center px-4 py-2 cursor-pointer hover:bg-purple-900/20"
-            onClick={() => setIsThinkingVisible(!isThinkingVisible)}
-          >
-            <Sparkle className="text-blue-400 mr-2" size={18} />
-            <span className="text-blue-300 font-medium">Show thinking</span>
-            {isThinkingVisible ? 
-              <ChevronUp className="ml-2 text-blue-400" size={16} /> : 
-              <ChevronDown className="ml-2 text-blue-400" size={16} />
-            }
-          </div>
-          
-          {isThinkingVisible && (
-            <div className="p-4 bg-blue-950/20 text-sm text-white/90 whitespace-pre-wrap">
-              {currentThought}
-            </div>
-          )}
-        </div>
+        <ReasoningProcess 
+          reasoning={currentThought}
+          isMinimized={!isThinkingVisible}
+          onToggle={() => setIsThinkingVisible(!isThinkingVisible)}
+        />
       )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
