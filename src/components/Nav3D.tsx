@@ -12,7 +12,8 @@ import {
   Laptop, 
   MessageCircle, 
   Search, 
-  Video 
+  Video,
+  Zap
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,7 +35,8 @@ export const Nav2D = () => {
     { id: 'ai-search', title: 'AI Search', icon: <Search className="w-6 h-6" />, path: '/search' },
     { id: 'games', title: 'Games', icon: <Gamepad className="w-6 h-6" />, path: '/games' },
     { id: 'media', title: 'Media Creation', icon: <Image className="w-6 h-6" />, path: '/media' },
-    { id: 'video', title: 'Video Editor', icon: <Video className="w-6 h-6" />, path: '/video' }
+    { id: 'video', title: 'Video Editor', icon: <Video className="w-6 h-6" />, path: '/video' },
+    { id: 'updates', title: 'Update', icon: <Zap className="w-6 h-6" />, path: '/updates' },
   ];
 
   return (
@@ -51,6 +53,9 @@ export const Nav2D = () => {
           <span className="text-white group-hover:text-purple-300 transition-colors">
             {item.title}
           </span>
+          {item.id === 'updates' && (
+            <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-0.5 rounded-full text-white">New</span>
+          )}
         </Link>
       ))}
     </div>

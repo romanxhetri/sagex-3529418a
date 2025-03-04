@@ -2,53 +2,17 @@
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-// Remove the module declarations and handle without them - we'll use any types
-// when importing from three/examples
-
-// Import the modules using regular import with type any
-import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls";
-import { GLTFLoader as GLTFLoaderImpl } from "three/examples/jsm/loaders/GLTFLoader";
-import { DRACOLoader as DRACOLoaderImpl } from "three/examples/jsm/loaders/DRACOLoader";
-
-// Create interfaces for the types we need
-interface GLTFLoader {
-  constructor(): GLTFLoaderImpl;
-  load(url: string, onLoad: (gltf: any) => void, onProgress?: (event: ProgressEvent) => void, onError?: (event: ErrorEvent) => void): void;
-  setDRACOLoader(dracoLoader: any): GLTFLoaderImpl;
-  parse(data: ArrayBuffer | string, path: string, onLoad: (gltf: any) => void, onError?: (event: ErrorEvent) => void): void;
-}
-
-interface DRACOLoader {
-  constructor(): DRACOLoaderImpl;
-  setDecoderPath(path: string): DRACOLoaderImpl;
-  setDecoderConfig(config: object): DRACOLoaderImpl;
-  setWorkerLimit(workerLimit: number): DRACOLoaderImpl;
-  preload(): DRACOLoaderImpl;
-  dispose(): DRACOLoaderImpl;
-}
-
-interface OrbitControls {
-  constructor(camera: THREE.Camera, domElement?: HTMLElement): OrbitControlsImpl;
-  enabled: boolean;
-  enableDamping: boolean;
-  dampingFactor: number;
-  screenSpacePanning: boolean;
-  minDistance: number;
-  maxDistance: number;
-  maxPolarAngle: number;
-  update(): void;
-}
-
-// Cast the implementations to our interfaces
-const GLTFLoader = GLTFLoaderImpl as unknown as GLTFLoader;
-const DRACOLoader = DRACOLoaderImpl as unknown as DRACOLoader;
-const OrbitControls = OrbitControlsImpl as unknown as OrbitControls;
+// Import the modules directly
+const OrbitControlsImpl = await import("three/examples/jsm/controls/OrbitControls").then(m => m.OrbitControls);
+const GLTFLoaderImpl = await import("three/examples/jsm/loaders/GLTFLoader").then(m => m.GLTFLoader);
+const DRACOLoaderImpl = await import("three/examples/jsm/loaders/DRACOLoader").then(m => m.DRACOLoader);
 
 export const MagicalUniverseScene: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const animeModelRef = useRef<THREE.Group | null>(null);
   const draggingRef = useRef(false);
   const originalPositionRef = useRef<THREE.Vector3 | null>(null);
+  const shootingStarsRef = useRef<THREE.Points | null>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -68,7 +32,7 @@ export const MagicalUniverseScene: React.FC = () => {
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
     renderer.shadowMap.enabled = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.5;
@@ -148,6 +112,60 @@ export const MagicalUniverseScene: React.FC = () => {
 
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
+
+    // Create shooting stars
+    const shootingStarGeometry = new THREE.BufferGeometry();
+    const shootingStarCount = 50;
+    const shootingStarPositions = new Float32Array(shootingStarCount * 3);
+    const shootingStarVelocities = new Float32Array(shootingStarCount * 3);
+    const shootingStarColors = new Float32Array(shootingStarCount * 3);
+    const shootingStarSizes = new Float32Array(shootingStarCount);
+    const shootingStarLifetimes = new Float32Array(shootingStarCount);
+    
+    for (let i = 0; i < shootingStarCount; i++) {
+      const i3 = i * 3;
+      shootingStarPositions[i3] = (Math.random() - 0.5) * 2000;
+      shootingStarPositions[i3 + 1] = (Math.random() - 0.5) * 2000;
+      shootingStarPositions[i3 + 2] = (Math.random() - 0.5) * 2000;
+      
+      // Velocities
+      shootingStarVelocities[i3] = (Math.random() - 0.5) * 10;
+      shootingStarVelocities[i3 + 1] = (Math.random() - 0.5) * 10;
+      shootingStarVelocities[i3 + 2] = (Math.random() - 0.5) * 10;
+      
+      // Colors
+      const color = new THREE.Color();
+      color.setHSL(Math.random() * 0.2 + 0.5, 0.9, 0.7); // Blueish to purplish colors
+      shootingStarColors[i3] = color.r;
+      shootingStarColors[i3 + 1] = color.g;
+      shootingStarColors[i3 + 2] = color.b;
+      
+      // Size and lifetime
+      shootingStarSizes[i] = Math.random() * 4 + 2;
+      shootingStarLifetimes[i] = Math.random() * 100;
+    }
+    
+    shootingStarGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(shootingStarPositions, 3)
+    );
+    shootingStarGeometry.setAttribute(
+      "color",
+      new THREE.BufferAttribute(shootingStarColors, 3)
+    );
+    
+    const shootingStarMaterial = new THREE.PointsMaterial({
+      size: 4,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    });
+    
+    const shootingStars = new THREE.Points(shootingStarGeometry, shootingStarMaterial);
+    scene.add(shootingStars);
+    shootingStarsRef.current = shootingStars;
 
     // Store all nebula animations
     const nebulaAnimations: (() => void)[] = [];
@@ -302,6 +320,51 @@ export const MagicalUniverseScene: React.FC = () => {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
+    // Create more anime characters
+    for (let i = 0; i < 5; i++) {
+      const charGeometry = new THREE.BoxGeometry(1, 1, 1);
+      charGeometry.scale(3 + Math.random() * 3, 8 + Math.random() * 4, 1.5);
+      
+      // We'll use the same texture but with different colors
+      const charMaterial = new THREE.MeshStandardMaterial({
+        map: animeTexture,
+        transparent: true,
+        roughness: 0.5,
+        metalness: 0.8,
+        color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6), // Random color tint
+      });
+      
+      const charMesh = new THREE.Mesh(charGeometry, charMaterial);
+      charMesh.castShadow = true;
+      charMesh.receiveShadow = true;
+      
+      const charGroup = new THREE.Group();
+      charGroup.add(charMesh);
+      
+      // Position randomly around the scene
+      charGroup.position.set(
+        (Math.random() - 0.5) * 100,
+        (Math.random() * 10) - 5,
+        (Math.random() - 0.5) * 100
+      );
+      
+      scene.add(charGroup);
+      
+      // Add animation for each character
+      const animateChar = () => {
+        const time = Date.now() * 0.001;
+        const uniqueOffset = i * 0.5;
+        
+        // Float up and down
+        charGroup.position.y += Math.sin(time + uniqueOffset) * 0.03;
+        
+        // Gentle rotation
+        charGroup.rotation.y += 0.005;
+      };
+      
+      nebulaAnimations.push(animateChar);
+    }
+
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
@@ -309,6 +372,41 @@ export const MagicalUniverseScene: React.FC = () => {
       // Rotate stars slowly
       stars.rotation.y += 0.0002;
       stars.rotation.x += 0.0001;
+      
+      // Animate shooting stars
+      if (shootingStarsRef.current) {
+        const positions = shootingStarsRef.current.geometry.attributes.position.array as Float32Array;
+        
+        for (let i = 0; i < shootingStarCount; i++) {
+          const i3 = i * 3;
+          
+          // Update position based on velocity
+          positions[i3] += shootingStarVelocities[i3] * 0.5;
+          positions[i3 + 1] += shootingStarVelocities[i3 + 1] * 0.5;
+          positions[i3 + 2] += shootingStarVelocities[i3 + 2] * 0.5;
+          
+          // Update lifetime
+          shootingStarLifetimes[i] -= 1;
+          
+          // Reset shooting star if lifetime expired or out of bounds
+          if (shootingStarLifetimes[i] <= 0 || 
+              Math.abs(positions[i3]) > 1000 ||
+              Math.abs(positions[i3 + 1]) > 1000 ||
+              Math.abs(positions[i3 + 2]) > 1000) {
+            positions[i3] = (Math.random() - 0.5) * 2000;
+            positions[i3 + 1] = (Math.random() - 0.5) * 2000;
+            positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+            
+            shootingStarVelocities[i3] = (Math.random() - 0.5) * 10;
+            shootingStarVelocities[i3 + 1] = (Math.random() - 0.5) * 10;
+            shootingStarVelocities[i3 + 2] = (Math.random() - 0.5) * 10;
+            
+            shootingStarLifetimes[i] = Math.random() * 100;
+          }
+        }
+        
+        shootingStarsRef.current.geometry.attributes.position.needsUpdate = true;
+      }
       
       // Animate particles
       const particlePositions = particles.geometry.attributes.position.array as Float32Array;
