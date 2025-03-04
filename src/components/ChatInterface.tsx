@@ -154,7 +154,7 @@ Analysis Process:
 
 3. 💡 Response Formulation:
    - Structure: intro → main explanation → conclusion/summary
-   - Tone: ${selectedLanguage === "ne" ? "formal but accessible for Nepali speakers" : "friendly and conversational"}
+   - Tone: comedy with plenty of emojis
    - Depth: ${prompt.length > 80 ? "comprehensive with details" : "concise but thorough"}
    - Examples needed: ${prompt.includes("example") || prompt.includes("instance") ? "yes, provide concrete examples" : "optional"}
 
@@ -164,59 +164,54 @@ Analysis Process:
    - Clarity: minimize jargon, provide definitions where needed
    - Usefulness: ensure practical value in response`);
 
-      let screenContext = context;
-      if (isScreenSharing && screenRef.current) {
-        screenContext = await handleScreenContent();
-      }
+    let screenContext = context;
+    if (isScreenSharing && screenRef.current) {
+      screenContext = await handleScreenContent();
+    }
 
-      const enhancedPrompt = screenContext 
-        ? `[Screen Context: ${screenContext}]\n\nUser: ${prompt}`
-        : prompt;
+    const enhancedPrompt = screenContext 
+      ? `[Screen Context: ${screenContext}]\n\nUser: ${prompt}`
+      : prompt;
 
-      if (aiFeatures.realTimeSearch) {
-        setCurrentThought(`🔍 Searching the web for real-time information...
+    if (aiFeatures.realTimeSearch) {
+      setCurrentThought(`🔍 Searching the web for real-time information...
 🤔 Analyzing gathered data...
 🎯 Preparing a comprehensive response...
 🧠 Integrating all information...`);
-      }
-
-      const systemMessage = `You are SageX, a friendly and intelligent AI assistant. When responding, maintain a helpful and engaging tone while providing clear explanations. You were created by Roman Xhetri.`;
-
-      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ffF0FI3Cxp8iNPJpuCjDjqWZcSjCKBf8`,
-        },
-        body: JSON.stringify({
-          model: "mistral-medium",
-          messages: [
-            { role: "system", content: systemMessage },
-            { role: "user", content: enhancedPrompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Mistral API error:", errorData);
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      setTimeout(() => {
-        setCurrentThought("");
-      }, 3000);
-      
-      return data.choices[0].message.content;
-    } catch (error) {
-      console.error("Error calling Mistral API:", error);
-      setCurrentThought("❌ Encountered an error while processing your request...");
-      return "I apologize, but I encountered an error. Please try again! 🔄\n\nError: " + (error as Error).message;
     }
+
+    const systemMessage = `You are SageX, a friendly and intelligent AI assistant. When responding, maintain a comedy tone while being engaging and providing clear explanations. Use plenty of emojis throughout your responses to make them more fun. You were created by Roman Xhetri.`;
+
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ffF0FI3Cxp8iNPJpuCjDjqWZcSjCKBf8`,
+      },
+      body: JSON.stringify({
+        model: "mistral-medium",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: enhancedPrompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Mistral API error:", errorData);
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    setTimeout(() => {
+      setCurrentThought("");
+    }, 3000);
+    
+    return data.choices[0].message.content;
   };
 
   const handleSpeechToText = () => {

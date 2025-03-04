@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useEffect } from "react";
+import { Mic, MicOff, Volume2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VoiceCommandListenerProps {
   onCommand: (command: string) => void;
@@ -14,138 +14,120 @@ export const VoiceCommandListener: React.FC<VoiceCommandListenerProps> = ({
   isListening,
   setIsListening
 }) => {
-  const { toast } = useToast();
-  const recognitionRef = useRef<any>(null);
   const [transcript, setTranscript] = useState("");
-
+  const [confidence, setConfidence] = useState(0);
+  const [showTranscript, setShowTranscript] = useState(false);
+  
   useEffect(() => {
-    // Check if the browser supports speech recognition
-    if (!('webkitSpeechRecognition' in window)) {
-      toast({
-        title: "Voice Commands Unavailable",
-        description: "Your browser doesn't support voice recognition.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Setup recognition
-    const SpeechRecognition = window.webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    const recognition = recognitionRef.current;
+    let recognition: any = null;
     
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      const currentTranscript = Array.from(event.results)
-        .map((result: any) => result[0])
-        .map((result: any) => result.transcript)
-        .join('');
-      
-      setTranscript(currentTranscript);
-      
-      // Check for commands in the most recent result
-      const lastResult = event.results[event.results.length - 1];
-      if (lastResult.isFinal) {
-        const command = lastResult[0].transcript.toLowerCase().trim();
-        onCommand(command);
-        
-        // Show the recognized command
-        toast({
-          title: "Voice Command Recognized",
-          description: command,
-        });
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Speech Recognition Error", event.error);
-      if (event.error === 'no-speech') {
-        // This is a common error, don't show it to the user
-        return;
-      }
-      
-      toast({
-        title: "Voice Recognition Error",
-        description: `Error: ${event.error}`,
-        variant: "destructive"
-      });
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      // Only restart if we're still meant to be listening
-      if (isListening) {
-        recognition.start();
-      } else {
-        setIsListening(false);
-      }
-    };
-
-    // Start or stop based on isListening prop
     if (isListening) {
       try {
+        // @ts-ignore - SpeechRecognition is not in the TypeScript types
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+          setShowTranscript(true);
+          setTranscript("Listening...");
+        };
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+              setConfidence(event.results[i][0].confidence);
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          if (finalTranscript) {
+            setTranscript(finalTranscript);
+            if (finalTranscript.trim()) {
+              onCommand(finalTranscript);
+              setIsListening(false);
+              setShowTranscript(false);
+            }
+          } else {
+            setTranscript(interimTranscript);
+          }
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setTranscript(`Error: ${event.error}`);
+          setIsListening(false);
+          setTimeout(() => setShowTranscript(false), 2000);
+        };
+        
+        recognition.onend = () => {
+          setIsListening(false);
+          setTimeout(() => setShowTranscript(false), 2000);
+        };
+        
         recognition.start();
       } catch (error) {
-        console.error("Failed to start speech recognition", error);
-      }
-    } else if (recognition) {
-      try {
-        recognition.stop();
-      } catch (error) {
-        console.error("Failed to stop speech recognition", error);
+        console.error("Speech recognition not supported", error);
+        setTranscript("Speech recognition not supported in this browser");
+        setIsListening(false);
+        setTimeout(() => setShowTranscript(false), 2000);
       }
     }
-
-    // Cleanup
+    
     return () => {
       if (recognition) {
         try {
           recognition.stop();
         } catch (error) {
-          // Ignore errors on cleanup
+          console.error("Error stopping recognition", error);
         }
       }
     };
-  }, [isListening, toast, onCommand, setIsListening]);
-
-  const toggleListening = () => {
-    if (isListening) {
-      setIsListening(false);
-      toast({
-        title: "Voice Commands Disabled",
-        description: "Voice command listening has been turned off",
-      });
-    } else {
-      setIsListening(true);
-      toast({
-        title: "Voice Commands Enabled",
-        description: "Listening for voice commands...",
-      });
-    }
-  };
-
+  }, [isListening, onCommand, setIsListening]);
+  
   return (
-    <div className="flex items-center">
+    <>
       <button
-        onClick={toggleListening}
-        className={`flex items-center justify-center p-2 rounded-full ${
+        onClick={() => setIsListening(!isListening)}
+        className={`p-2 rounded-full transition-colors ${
           isListening 
-            ? "bg-red-500 text-white animate-pulse" 
-            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            ? "bg-purple-600 text-white animate-pulse" 
+            : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
         }`}
-        title={isListening ? "Disable voice commands" : "Enable voice commands"}
+        title="Voice commands"
       >
-        {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+        {isListening ? <Mic size={16} /> : <MicOff size={16} />}
       </button>
       
-      {isListening && (
-        <div className="ml-2 text-sm text-gray-400 animate-pulse">
-          Listening for commands...
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {showTranscript && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute top-16 right-0 bg-gray-900 border border-purple-500/30 p-3 rounded-lg shadow-lg z-50 max-w-xs"
+          >
+            <div className="flex items-center mb-2">
+              <Volume2 size={16} className="text-purple-400 mr-2 animate-pulse" />
+              <span className="text-sm font-medium text-white">Voice Command</span>
+            </div>
+            <p className="text-gray-300 text-sm">{transcript}</p>
+            <div className="mt-2 bg-gray-800 rounded-full h-1.5">
+              <div 
+                className="bg-purple-500 h-1.5 rounded-full" 
+                style={{ width: `${confidence * 100}%` }}
+              ></div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };

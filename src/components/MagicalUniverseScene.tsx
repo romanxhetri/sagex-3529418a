@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
@@ -29,19 +30,17 @@ interface DRACOLoaderType {
   }
 }
 
-// Use dynamic imports and type assertions
-let OrbitControls: OrbitControlsType;
-let GLTFLoader: GLTFLoaderType;
-let DRACOLoader: DRACOLoaderType;
-
-// We'll initialize these in the useEffect hook
-
 export const MagicalUniverseScene: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const animeModelRef = useRef<THREE.Group | null>(null);
   const draggingRef = useRef(false);
   const originalPositionRef = useRef<THREE.Vector3 | null>(null);
   const shootingStarsRef = useRef<THREE.Points | null>(null);
+  const weatherEffectsRef = useRef<{
+    currentEffect: 'thunder' | 'fire' | 'wind' | 'rain' | null;
+    particleSystem: THREE.Points | null;
+    lightning: THREE.PointLight | null;
+  }>({ currentEffect: null, particleSystem: null, lightning: null });
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -50,17 +49,16 @@ export const MagicalUniverseScene: React.FC = () => {
     const loadModules = async () => {
       try {
         // Load the modules
-        const orbitControlsModule = await import("three/examples/jsm/controls/OrbitControls");
-        const gltfLoaderModule = await import("three/examples/jsm/loaders/GLTFLoader");
-        const dracoLoaderModule = await import("three/examples/jsm/loaders/DRACOLoader");
-        
-        // Assign to our variables
-        OrbitControls = orbitControlsModule.OrbitControls as unknown as OrbitControlsType;
-        GLTFLoader = gltfLoaderModule.GLTFLoader as unknown as GLTFLoaderType;
-        DRACOLoader = dracoLoaderModule.DRACOLoader as unknown as DRACOLoaderType;
+        const orbitControlsModule = await import("three/examples/jsm/controls/OrbitControls.js");
+        const gltfLoaderModule = await import("three/examples/jsm/loaders/GLTFLoader.js");
+        const dracoLoaderModule = await import("three/examples/jsm/loaders/DRACOLoader.js");
         
         // Initialize the scene once modules are loaded
-        initScene();
+        initScene(
+          orbitControlsModule.OrbitControls as unknown as OrbitControlsType,
+          gltfLoaderModule.GLTFLoader as unknown as GLTFLoaderType,
+          dracoLoaderModule.DRACOLoader as unknown as DRACOLoaderType
+        );
       } catch (error) {
         console.error("Failed to load Three.js modules:", error);
       }
@@ -70,7 +68,11 @@ export const MagicalUniverseScene: React.FC = () => {
     loadModules();
 
     // Scene initialization function
-    const initScene = () => {
+    const initScene = (
+      OrbitControls: OrbitControlsType,
+      GLTFLoader: GLTFLoaderType,
+      DRACOLoader: DRACOLoaderType
+    ) => {
       // Scene setup
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000016);
@@ -220,6 +222,245 @@ export const MagicalUniverseScene: React.FC = () => {
       const shootingStars = new THREE.Points(shootingStarGeometry, shootingStarMaterial);
       scene.add(shootingStars);
       shootingStarsRef.current = shootingStars;
+
+      // Add weather effects
+      const setupWeatherEffects = () => {
+        // Setup weather effect cycling
+        let currentIndex = 0;
+        const weatherEffects = ['thunder', 'fire', 'wind', 'rain'];
+        
+        const cycleWeatherEffects = () => {
+          // Remove previous effect
+          if (weatherEffectsRef.current.particleSystem) {
+            scene.remove(weatherEffectsRef.current.particleSystem);
+            weatherEffectsRef.current.particleSystem = null;
+          }
+          
+          if (weatherEffectsRef.current.lightning) {
+            scene.remove(weatherEffectsRef.current.lightning);
+            weatherEffectsRef.current.lightning = null;
+          }
+          
+          // Set new effect
+          const effect = weatherEffects[currentIndex] as 'thunder' | 'fire' | 'wind' | 'rain';
+          weatherEffectsRef.current.currentEffect = effect;
+          
+          // Create the effect
+          switch (effect) {
+            case 'thunder':
+              createThunderEffect(scene);
+              break;
+            case 'fire':
+              createFireEffect(scene);
+              break;
+            case 'wind':
+              createWindEffect(scene);
+              break;
+            case 'rain':
+              createRainEffect(scene);
+              break;
+          }
+          
+          // Move to next effect
+          currentIndex = (currentIndex + 1) % weatherEffects.length;
+        };
+        
+        // Initial effect
+        cycleWeatherEffects();
+        
+        // Cycle effects every 5 seconds
+        setInterval(cycleWeatherEffects, 5000);
+      };
+      
+      // Thunder effect
+      const createThunderEffect = (scene: THREE.Scene) => {
+        // Add lightning flashes
+        const lightning = new THREE.PointLight(0xFFFFFF, 20, 500, 1.7);
+        lightning.position.set(100, 300, 100);
+        scene.add(lightning);
+        weatherEffectsRef.current.lightning = lightning;
+        
+        // Create lightning particles
+        const particleCount = 1000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount * 3; i += 3) {
+          // Lightning bolts are mostly vertical
+          positions[i] = (Math.random() - 0.5) * 400;
+          positions[i + 1] = Math.random() * 400;
+          positions[i + 2] = (Math.random() - 0.5) * 400;
+          
+          // Electric blue color
+          colors[i] = 0.5 + Math.random() * 0.5; // Blue
+          colors[i + 1] = 0.7 + Math.random() * 0.3; // Blue-white
+          colors[i + 2] = 1.0; // Full blue
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        const material = new THREE.PointsMaterial({
+          size: 2,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        weatherEffectsRef.current.particleSystem = particles;
+        
+        // Lightning flash animation is handled in the animation loop
+      };
+      
+      // Fire effect
+      const createFireEffect = (scene: THREE.Scene) => {
+        const particleCount = 5000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        
+        for (let i = 0; i < particleCount; i++) {
+          const i3 = i * 3;
+          // Fire source at the bottom of scene
+          positions[i3] = (Math.random() - 0.5) * 500;
+          positions[i3 + 1] = Math.random() * 100 - 50;
+          positions[i3 + 2] = (Math.random() - 0.5) * 500;
+          
+          // Fire colors: yellow, orange, red
+          const colorRand = Math.random();
+          if (colorRand < 0.3) {
+            // Yellow
+            colors[i3] = 1.0;
+            colors[i3 + 1] = 0.9;
+            colors[i3 + 2] = 0.3;
+          } else if (colorRand < 0.7) {
+            // Orange
+            colors[i3] = 1.0;
+            colors[i3 + 1] = 0.5;
+            colors[i3 + 2] = 0.1;
+          } else {
+            // Red
+            colors[i3] = 1.0;
+            colors[i3 + 1] = 0.2;
+            colors[i3 + 2] = 0.1;
+          }
+          
+          sizes[i] = Math.random() * 5 + 2;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const material = new THREE.PointsMaterial({
+          size: 3,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+          sizeAttenuation: true
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        weatherEffectsRef.current.particleSystem = particles;
+        
+        // Add fire light
+        const fireLight = new THREE.PointLight(0xff5500, 5, 300, 1.5);
+        fireLight.position.set(0, 50, 0);
+        scene.add(fireLight);
+        weatherEffectsRef.current.lightning = fireLight;
+      };
+      
+      // Wind effect
+      const createWindEffect = (scene: THREE.Scene) => {
+        const particleCount = 3000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount; i++) {
+          const i3 = i * 3;
+          // Distribute throughout scene
+          positions[i3] = (Math.random() - 0.5) * 800;
+          positions[i3 + 1] = Math.random() * 400 - 50;
+          positions[i3 + 2] = (Math.random() - 0.5) * 800;
+          
+          // Wind particles: white/light blue
+          colors[i3] = 0.8;
+          colors[i3 + 1] = 0.9;
+          colors[i3 + 2] = 1.0;
+          
+          // Wind velocity (mostly horizontal)
+          velocities[i3] = Math.random() * 2 + 0.5;
+          velocities[i3 + 1] = Math.random() * 0.2;
+          velocities[i3 + 2] = Math.random() * 0.2;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        const material = new THREE.PointsMaterial({
+          size: 1.5,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.3,
+          blending: THREE.AdditiveBlending
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        weatherEffectsRef.current.particleSystem = particles;
+        
+        // Wind animation is handled in animation loop
+      };
+      
+      // Rain effect
+      const createRainEffect = (scene: THREE.Scene) => {
+        const rainCount = 15000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(rainCount * 3);
+        const velocities = new Float32Array(rainCount);
+        
+        for (let i = 0; i < rainCount; i++) {
+          const i3 = i * 3;
+          // Rain starting positions
+          positions[i3] = (Math.random() - 0.5) * 1000;
+          positions[i3 + 1] = Math.random() * 500;
+          positions[i3 + 2] = (Math.random() - 0.5) * 1000;
+          
+          // Rain drop velocity
+          velocities[i] = Math.random() * 1.5 + 0.5;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        const material = new THREE.PointsMaterial({
+          size: 1.2,
+          color: 0x99ccff,
+          transparent: true,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending
+        });
+        
+        const rain = new THREE.Points(geometry, material);
+        scene.add(rain);
+        weatherEffectsRef.current.particleSystem = rain;
+        
+        // Add soft blue light for rain atmosphere
+        const rainLight = new THREE.AmbientLight(0x0055aa, 0.5);
+        scene.add(rainLight);
+        weatherEffectsRef.current.lightning = rainLight;
+      };
+      
+      // Initialize weather effects
+      setupWeatherEffects();
 
       // Store all nebula animations
       const nebulaAnimations: (() => void)[] = [];
@@ -462,6 +703,24 @@ export const MagicalUniverseScene: React.FC = () => {
           shootingStarsRef.current.geometry.attributes.position.needsUpdate = true;
         }
         
+        // Animate weather effects
+        if (weatherEffectsRef.current.particleSystem) {
+          switch (weatherEffectsRef.current.currentEffect) {
+            case 'thunder':
+              animateThunder();
+              break;
+            case 'fire':
+              animateFire();
+              break;
+            case 'wind':
+              animateWind();
+              break;
+            case 'rain':
+              animateRain();
+              break;
+          }
+        }
+        
         // Animate particles
         const particlePositions = particles.geometry.attributes.position.array as Float32Array;
         for (let i = 0; i < particlePositions.length; i += 3) {
@@ -495,6 +754,110 @@ export const MagicalUniverseScene: React.FC = () => {
         }
 
         renderer.render(scene, camera);
+      };
+      
+      // Weather effect animation functions
+      const animateThunder = () => {
+        if (weatherEffectsRef.current.lightning) {
+          // Random lightning flashes
+          if (Math.random() < 0.05) {
+            weatherEffectsRef.current.lightning.intensity = 20 + Math.random() * 30;
+          } else {
+            weatherEffectsRef.current.lightning.intensity *= 0.9;
+          }
+        }
+        
+        if (weatherEffectsRef.current.particleSystem) {
+          const positions = weatherEffectsRef.current.particleSystem.geometry.attributes.position.array as Float32Array;
+          
+          for (let i = 0; i < positions.length; i += 3) {
+            // Lightning jitters
+            positions[i] += (Math.random() - 0.5) * 2;
+            positions[i + 1] += (Math.random() - 0.5) * 2;
+            positions[i + 2] += (Math.random() - 0.5) * 2;
+            
+            // Occasionally reset some particles for new lightning bolts
+            if (Math.random() < 0.01) {
+              positions[i] = (Math.random() - 0.5) * 400;
+              positions[i + 1] = Math.random() * 400;
+              positions[i + 2] = (Math.random() - 0.5) * 400;
+            }
+          }
+          
+          weatherEffectsRef.current.particleSystem.geometry.attributes.position.needsUpdate = true;
+        }
+      };
+      
+      const animateFire = () => {
+        if (weatherEffectsRef.current.particleSystem) {
+          const positions = weatherEffectsRef.current.particleSystem.geometry.attributes.position.array as Float32Array;
+          
+          for (let i = 0; i < positions.length; i += 3) {
+            // Upward movement with jitter
+            positions[i] += (Math.random() - 0.5) * 1;
+            positions[i + 1] += Math.random() * 2;
+            positions[i + 2] += (Math.random() - 0.5) * 1;
+            
+            // Reset particles that go too high
+            if (positions[i + 1] > 200) {
+              positions[i] = (Math.random() - 0.5) * 500;
+              positions[i + 1] = Math.random() * 100 - 50;
+              positions[i + 2] = (Math.random() - 0.5) * 500;
+            }
+          }
+          
+          weatherEffectsRef.current.particleSystem.geometry.attributes.position.needsUpdate = true;
+        }
+        
+        if (weatherEffectsRef.current.lightning) {
+          // Flickering fire light
+          weatherEffectsRef.current.lightning.intensity = 3 + Math.random() * 4;
+        }
+      };
+      
+      const animateWind = () => {
+        if (weatherEffectsRef.current.particleSystem) {
+          const positions = weatherEffectsRef.current.particleSystem.geometry.attributes.position.array as Float32Array;
+          
+          for (let i = 0; i < positions.length; i += 3) {
+            // Wind movement (mostly horizontal)
+            positions[i] += 1.5 + Math.random();
+            positions[i + 1] += (Math.random() - 0.5) * 0.5;
+            positions[i + 2] += (Math.random() - 0.5) * 0.5;
+            
+            // Reset particles that go too far
+            if (positions[i] > 400) {
+              positions[i] = -400;
+              positions[i + 1] = Math.random() * 400 - 50;
+              positions[i + 2] = (Math.random() - 0.5) * 800;
+            }
+          }
+          
+          weatherEffectsRef.current.particleSystem.geometry.attributes.position.needsUpdate = true;
+        }
+      };
+      
+      const animateRain = () => {
+        if (weatherEffectsRef.current.particleSystem) {
+          const positions = weatherEffectsRef.current.particleSystem.geometry.attributes.position.array as Float32Array;
+          
+          for (let i = 0; i < positions.length; i += 3) {
+            // Rain falling
+            positions[i + 1] -= 2 + Math.random() * 2;
+            
+            // Slight sideways drift
+            positions[i] += (Math.random() - 0.5) * 0.3;
+            
+            // Reset raindrops that go too low
+            if (positions[i + 1] < -100) {
+              positions[i] = (Math.random() - 0.5) * 1000;
+              positions[i + 1] = 500;
+              positions[i + 2] = (Math.random() - 0.5) * 1000;
+            }
+          }
+          
+          weatherEffectsRef.current.particleSystem.geometry.attributes.position.needsUpdate = true;
+        }
       };
 
       animate();

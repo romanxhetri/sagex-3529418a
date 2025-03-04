@@ -12,6 +12,7 @@ import Mobiles from "./pages/Mobiles";
 import Updates from "./pages/Updates";
 import NotFound from "./pages/NotFound";
 import { AppIntro } from "./components/AppIntro";
+import { MagicalUniverseScene } from "./components/MagicalUniverseScene";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         {showIntro && <AppIntro />}
+        <MagicalUniverseScene />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
