@@ -1,46 +1,48 @@
 
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
-// Declare the modules that don't have type declarations
-// When importing from three/examples, we need to use type declarations
-declare module 'three/examples/jsm/loaders/GLTFLoader' {
-  export class GLTFLoader {
-    constructor();
-    load(url: string, onLoad: (gltf: any) => void, onProgress?: (event: ProgressEvent) => void, onError?: (event: ErrorEvent) => void): void;
-    setDRACOLoader(dracoLoader: any): GLTFLoader;
-    parse(data: ArrayBuffer | string, path: string, onLoad: (gltf: any) => void, onError?: (event: ErrorEvent) => void): void;
-  }
+
+// Remove the module declarations and handle without them - we'll use any types
+// when importing from three/examples
+
+// Import the modules using regular import with type any
+import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader as GLTFLoaderImpl } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader as DRACOLoaderImpl } from "three/examples/jsm/loaders/DRACOLoader";
+
+// Create interfaces for the types we need
+interface GLTFLoader {
+  constructor(): GLTFLoaderImpl;
+  load(url: string, onLoad: (gltf: any) => void, onProgress?: (event: ProgressEvent) => void, onError?: (event: ErrorEvent) => void): void;
+  setDRACOLoader(dracoLoader: any): GLTFLoaderImpl;
+  parse(data: ArrayBuffer | string, path: string, onLoad: (gltf: any) => void, onError?: (event: ErrorEvent) => void): void;
 }
 
-declare module 'three/examples/jsm/loaders/DRACOLoader' {
-  export class DRACOLoader {
-    constructor();
-    setDecoderPath(path: string): DRACOLoader;
-    setDecoderConfig(config: object): DRACOLoader;
-    setWorkerLimit(workerLimit: number): DRACOLoader;
-    preload(): DRACOLoader;
-    dispose(): DRACOLoader;
-  }
+interface DRACOLoader {
+  constructor(): DRACOLoaderImpl;
+  setDecoderPath(path: string): DRACOLoaderImpl;
+  setDecoderConfig(config: object): DRACOLoaderImpl;
+  setWorkerLimit(workerLimit: number): DRACOLoaderImpl;
+  preload(): DRACOLoaderImpl;
+  dispose(): DRACOLoaderImpl;
 }
 
-declare module 'three/examples/jsm/controls/OrbitControls' {
-  export class OrbitControls {
-    constructor(camera: THREE.Camera, domElement?: HTMLElement);
-    enabled: boolean;
-    enableDamping: boolean;
-    dampingFactor: number;
-    screenSpacePanning: boolean;
-    minDistance: number;
-    maxDistance: number;
-    maxPolarAngle: number;
-    update(): void;
-  }
+interface OrbitControls {
+  constructor(camera: THREE.Camera, domElement?: HTMLElement): OrbitControlsImpl;
+  enabled: boolean;
+  enableDamping: boolean;
+  dampingFactor: number;
+  screenSpacePanning: boolean;
+  minDistance: number;
+  maxDistance: number;
+  maxPolarAngle: number;
+  update(): void;
 }
 
-// Import the modules after declaring their types
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// Cast the implementations to our interfaces
+const GLTFLoader = GLTFLoaderImpl as unknown as GLTFLoader;
+const DRACOLoader = DRACOLoaderImpl as unknown as DRACOLoader;
+const OrbitControls = OrbitControlsImpl as unknown as OrbitControls;
 
 export const MagicalUniverseScene: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ export const MagicalUniverseScene: React.FC = () => {
     mountRef.current.appendChild(renderer.domElement);
 
     // Add orbit controls for interactive camera
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControlsImpl(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
@@ -147,7 +149,7 @@ export const MagicalUniverseScene: React.FC = () => {
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
 
-    // Store all nebula animations - declare this BEFORE using it
+    // Store all nebula animations
     const nebulaAnimations: (() => void)[] = [];
 
     // Create nebulas (colorful clouds)
