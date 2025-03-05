@@ -60,16 +60,26 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       };
       
       // Create mock module and exports objects
-      const mockModule = { exports: {} };
+      const mockModule: { exports: any } = { exports: {} };
       const mockExports = {};
       
       // Execute the function to get the component
       ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
       
       // Check if the component was exported
-      const Component = mockModule.exports.default || 
-                        mockModule.exports.Component || 
-                        mockModule.exports; // Try alternative export names if default doesn't exist
+      const exportedComponent = mockModule.exports;
+      let Component = null;
+      
+      // Try to find the component in different export formats
+      if (exportedComponent && typeof exportedComponent === 'object') {
+        if (exportedComponent.default) {
+          Component = exportedComponent.default;
+        } else if (exportedComponent.Component) {
+          Component = exportedComponent.Component;
+        } else if (typeof exportedComponent === 'function') {
+          Component = exportedComponent;
+        }
+      }
       
       // Render the component
       return Component ? <Component /> : <div className="text-yellow-500">No component exported</div>;
