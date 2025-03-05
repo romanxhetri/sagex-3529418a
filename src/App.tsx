@@ -31,7 +31,7 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       retry: 2,
       refetchOnWindowFocus: false, // Disable refetching on window focus for better performance
-      cacheTime: 10 * 60 * 1000 // 10 minutes cache time
+      gcTime: 10 * 60 * 1000 // 10 minutes cache time (renamed from cacheTime)
     }
   }
 });
@@ -68,6 +68,10 @@ const AppRoutes = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      
+      <div className="fixed bottom-1 left-1 text-xs text-gray-500 opacity-70">
+        Created by Roman Xhetri
+      </div>
     </>
   );
 };
@@ -79,7 +83,7 @@ const App = () => {
     // Hide intro after 8 seconds (reduced from 10)
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 8000);
+    }, 6000); // Further reduced to 6 seconds for faster app experience
 
     return () => clearTimeout(timer);
   }, []);

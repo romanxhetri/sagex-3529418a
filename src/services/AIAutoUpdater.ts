@@ -41,7 +41,7 @@ class AIAutoUpdater {
     this.isRunning = true;
     this.updateInterval = window.setInterval(() => {
       this.processTasks();
-    }, 15000); // Check for tasks every 15 seconds (faster than before)
+    }, 10000); // Check for tasks every 10 seconds (faster than before)
     
     console.log('AI Auto Updater service started');
     toast('AI Auto Updater is now monitoring your app');
@@ -300,12 +300,12 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const ProductCard = ({ title, description, price, image }) => {
+export const ProductCard = ({ title, description, imageUrl, price }) => {
   return (
     <Card className="w-full max-w-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
       <div className="aspect-video w-full overflow-hidden">
         <img 
-          src={image || "/placeholder.svg"} 
+          src={imageUrl || "/placeholder.svg"} 
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
         />
