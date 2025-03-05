@@ -69,7 +69,7 @@ const AppRoutes = () => {
         </Routes>
       </Suspense>
       
-      <div className="fixed bottom-1 left-1 text-xs text-gray-500 opacity-70">
+      <div className="fixed bottom-1 left-1 text-[10px] text-gray-500 opacity-60">
         Created by Roman Xhetri
       </div>
     </>
@@ -80,10 +80,10 @@ const App = () => {
   const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
-    // Hide intro after 8 seconds (reduced from 10)
+    // Hide intro after a shorter time for better performance
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 6000); // Further reduced to 6 seconds for faster app experience
+    }, 5000); // Further reduced to 5 seconds for faster app experience
 
     return () => clearTimeout(timer);
   }, []);

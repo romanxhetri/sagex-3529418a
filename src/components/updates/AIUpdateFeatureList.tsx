@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play } from "lucide-react";
@@ -6,6 +5,7 @@ import { aiAutoUpdater, UpdateTask } from "@/services/AIAutoUpdater";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LivePreview } from "./LivePreview";
+import { CodeImplementor } from "@/utils/codeImplementor";
 
 export const AIUpdateFeatureList: React.FC = () => {
   const [tasks, setTasks] = useState<UpdateTask[]>([]);
@@ -67,17 +67,22 @@ export const AIUpdateFeatureList: React.FC = () => {
     setSelectedTask(task);
   };
 
-  const handleImplementCode = (task: UpdateTask) => {
+  const handleImplementCode = async (task: UpdateTask) => {
     if (!task.code) {
       toast.error("No code available to implement");
       return;
     }
 
-    toast.success(`Implementing: ${task.description}`);
-    // In a real implementation, this would modify files
-    setTimeout(() => {
-      toast.success("Code successfully implemented!");
-    }, 1500);
+    const success = await CodeImplementor.implementCode(task);
+    
+    if (success) {
+      const updatedTasks = tasks.map(t => 
+        t.id === task.id 
+          ? { ...t, status: 'completed' as const } 
+          : t
+      );
+      setTasks(updatedTasks);
+    }
   };
 
   return (

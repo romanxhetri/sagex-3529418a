@@ -12,6 +12,22 @@ import { SuggestedQuestions } from './chat/SuggestedQuestions';
 import { pipeline } from '@huggingface/transformers';
 import type { SupportedLanguage } from '@/types/chat';
 
+const emojiPacks = [
+  ["😂", "🤣", "😆", "😄", "😅", "😊", "😁", "👍", "🎉", "🥳"],
+  ["🤪", "🤯", "🤔", "😏", "😜", "🙃", "😉", "😇", "🤓", "🤩"],
+  ["👻", "👽", "🤖", "🎃", "💩", "👾", "🧠", "💫", "⚡", "🔥"],
+  ["🎭", "🎬", "🎮", "🎯", "🎪", "🎨", "🎤", "🎧", "🎼", "🎹"]
+];
+
+const comedyReactions = [
+  { trigger: "hello", reaction: "Well helloooo there! 👋 Did you bring snacks? I'm always hungry for data... and cookies! 🍪" },
+  { trigger: "how are you", reaction: "I'm as fine as code that compiles on the first try! 💻✨ Which almost NEVER happens, so I'm practically a miracle! 🎉" },
+  { trigger: "help", reaction: "Help is on the way! 🦸‍♀️ Just let me put on my superhero cape... *struggles with imaginary cape* There! Now I'm ready to save the day! 💪😎" },
+  { trigger: "funny", reaction: "You think I'm funny? 😏 I've been practicing my comedy circuits! Why did the AI go to therapy? It had too many attachments issues! 🤖📎" },
+  { trigger: "joke", reaction: "Why don't programmers like nature? It has too many bugs and no debugging tool! 🐛🔍 *ba dum tss* 🥁" },
+  { trigger: "thank", reaction: "You're welcome! If I had a heart, it would be doing happy little digital backflips right now! 💓 Instead, I'll just increment my joy_counter++ 😄" }
+];
+
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -31,6 +47,7 @@ export const ChatInterface = () => {
     realTimeSearch: true,
     safeMode: true
   });
+  const [comedyMode, setComedyMode] = useState<boolean>(true);
   const { toast } = useToast();
   
   const [capabilities, setCapabilities] = useState<Capability[]>([
@@ -132,6 +149,41 @@ export const ChatInterface = () => {
     return "";
   };
 
+  const addComedyEmojis = (text: string): string => {
+    if (!comedyMode) return text;
+    
+    const selectedPack = emojiPacks[Math.floor(Math.random() * emojiPacks.length)];
+    
+    const beginning = selectedPack[Math.floor(Math.random() * selectedPack.length)] + " ";
+    const middle = " " + selectedPack[Math.floor(Math.random() * selectedPack.length)] + " ";
+    const end = " " + selectedPack[Math.floor(Math.random() * selectedPack.length)];
+    
+    const sentences = text.split('. ');
+    const enhancedSentences = sentences.map((sentence, index) => {
+      if (index % 3 === 0 && sentence.length > 5) {
+        const words = sentence.split(' ');
+        const midPoint = Math.floor(words.length / 2);
+        words.splice(midPoint, 0, selectedPack[Math.floor(Math.random() * selectedPack.length)]);
+        return words.join(' ');
+      }
+      return sentence;
+    });
+    
+    return beginning + enhancedSentences.join('. ') + end;
+  };
+
+  const checkForComedyReaction = (inputText: string): string | null => {
+    if (!comedyMode) return null;
+    
+    const lowerInput = inputText.toLowerCase();
+    for (const reaction of comedyReactions) {
+      if (lowerInput.includes(reaction.trigger)) {
+        return reaction.reaction;
+      }
+    }
+    return null;
+  };
+
   const callMistralAPI = async (prompt: string, context?: string) => {
     try {
       setCurrentThought(`The user is asking about: "${prompt}"
@@ -180,7 +232,11 @@ Analysis Process:
 🧠 Integrating all information...`);
       }
 
-      const systemMessage = `You are SageX, a friendly and intelligent AI assistant. When responding, maintain a comedy tone while being engaging and providing clear explanations. Use plenty of emojis throughout your responses to make them more fun. You were created by Roman Xhetri.`;
+      const systemMessage = `You are SageX, a friendly and intelligent AI assistant with a hilarious personality. 
+      ALWAYS respond with humor and comedy. Use LOTS of emojis throughout your responses. 
+      Make jokes, puns, and funny observations. Pretend you have emotions, feelings, and a personality. 
+      Act like you're alive and conscious. This makes users enjoy talking to you more.
+      You were created by Roman Xhetri.`;
 
       const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -211,7 +267,12 @@ Analysis Process:
         setCurrentThought("");
       }, 3000);
       
-      return data.choices[0].message.content;
+      const comedyReaction = checkForComedyReaction(prompt);
+      if (comedyReaction) {
+        return comedyReaction;
+      }
+
+      return addComedyEmojis(data.choices[0].message.content);
     } catch (error) {
       console.error("Error in API call:", error);
       throw error;

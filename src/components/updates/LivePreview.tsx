@@ -30,6 +30,29 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
     return !dangerousPatterns.some(pattern => codeString.includes(pattern));
   };
 
+  // Find component name in code
+  const extractComponentName = (codeString: string): string | null => {
+    // Try to find export statements
+    const exportMatch = codeString.match(/export\s+(const|function|class)\s+(\w+)/);
+    if (exportMatch && exportMatch[2]) {
+      return exportMatch[2];
+    }
+    
+    // Try to find default export statements
+    const defaultExportMatch = codeString.match(/export\s+default\s+(\w+)/);
+    if (defaultExportMatch && defaultExportMatch[1]) {
+      return defaultExportMatch[1];
+    }
+    
+    // Try to find component declaration
+    const constMatch = codeString.match(/const\s+(\w+)\s*=\s*\(\)/);
+    if (constMatch && constMatch[1]) {
+      return constMatch[1];
+    }
+    
+    return null;
+  };
+
   // Simple component renderer
   const renderComponent = () => {
     if (!code || isLoading) return null;
@@ -39,14 +62,24 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
     }
     
     try {
+      // Extract component name
+      const componentName = extractComponentName(code);
+      
       // Create a dynamic component from the code string
       const transformedCode = `
         ${code}
+        return ${componentName || 'null'};
       `;
       
       // Create a function that returns the component
       // eslint-disable-next-line no-new-func
-      const ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', 'return ' + transformedCode);
+      let ComponentFunction;
+      try {
+        ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', 'return ' + transformedCode);
+      } catch (error) {
+        // If there's an error, try an alternative approach
+        ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', transformedCode);
+      }
       
       // Create a mock require function to handle imports
       const mockRequire = (moduleName: string) => {
@@ -55,12 +88,16 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
         if (moduleName.startsWith('@/components/ui/')) {
           // Mock shadcn components
           return {
-            Button: (props: any) => <button {...props}>{props.children}</button>,
-            Card: (props: any) => <div {...props}>{props.children}</div>,
-            CardContent: (props: any) => <div {...props}>{props.children}</div>,
-            CardFooter: (props: any) => <div {...props}>{props.children}</div>,
-            CardHeader: (props: any) => <div {...props}>{props.children}</div>,
-            CardTitle: (props: any) => <h3 {...props}>{props.children}</h3>,
+            Button: (props: any) => <button className="px-4 py-2 bg-purple-600 text-white rounded" {...props}>{props.children}</button>,
+            Card: (props: any) => <div className="border rounded p-4 bg-gray-800" {...props}>{props.children}</div>,
+            CardContent: (props: any) => <div className="py-2" {...props}>{props.children}</div>,
+            CardFooter: (props: any) => <div className="pt-2 border-t border-gray-700" {...props}>{props.children}</div>,
+            CardHeader: (props: any) => <div className="pb-2 border-b border-gray-700" {...props}>{props.children}</div>,
+            CardTitle: (props: any) => <h3 className="text-lg font-bold" {...props}>{props.children}</h3>,
+            Input: (props: any) => <input className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props} />,
+            Label: (props: any) => <label className="block text-sm font-medium" {...props}>{props.children}</label>,
+            Select: (props: any) => <select className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props}>{props.children}</select>,
+            Textarea: (props: any) => <textarea className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props}>{props.children}</textarea>,
           };
         }
         if (moduleName.startsWith('lucide-react')) {
@@ -98,106 +135,83 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       const mockExports = {};
       
       try {
-        // First try with return statement (for component expressions)
+        // Try with component expression
         const result = ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
         
         if (result && typeof result === 'function') {
           // If the function returned a React component directly
           const Component = result;
-          return <Component />;
+          return (
+            <ErrorBoundary>
+              <Component />
+            </ErrorBoundary>
+          );
+        } else if (React.isValidElement(result)) {
+          // If it returned a React element directly
+          return result;
         }
       } catch (error) {
-        // If that fails, try with the regular component definition approach
-        // eslint-disable-next-line no-new-func
-        const RegularComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', transformedCode);
-        
-        // Execute the function to get the component
-        RegularComponentFunction(React, motion, mockRequire, mockModule, mockExports);
+        console.log("First approach failed, trying alternative:", error);
       }
       
+      // If that fails, try with the regular component definition approach
       // Check if the component was exported
-      const exportedComponent = mockModule.exports;
-      let Component = null;
-      
-      // Try to find the component in different export formats
-      if (exportedComponent && typeof exportedComponent === 'object') {
-        if (exportedComponent.default) {
-          Component = exportedComponent.default;
-        } else if (exportedComponent.NewFeature) {
-          Component = exportedComponent.NewFeature;
-        } else if (exportedComponent.Component) {
-          Component = exportedComponent.Component;
-        } else if (exportedComponent.ProductCard) {
-          Component = exportedComponent.ProductCard;
-          // For ProductCard, provide sample props
-          return <Component 
-            title="Sample Product" 
-            description="This is a sample product description" 
-            imageUrl="/placeholder.svg" 
-            price={99.99} 
-          />;
-        } else if (exportedComponent.EnhancedButton) {
-          Component = exportedComponent.EnhancedButton;
-          // For buttons, provide sample children
-          return <Component>Sample Button</Component>;
-        } else if (exportedComponent.ProfileCard) {
-          Component = exportedComponent.ProfileCard;
-          return <Component />;
-        } else if (exportedComponent.MagicalFeature) {
-          Component = exportedComponent.MagicalFeature;
-          return <Component />;
-        } else if (exportedComponent.AIAutoUpdateManager) {
-          Component = exportedComponent.AIAutoUpdateManager;
-          return <Component />;
-        } else if (Object.keys(exportedComponent).length > 0) {
-          // Try the first exported component if multiple are exported
-          const firstKey = Object.keys(exportedComponent)[0];
-          Component = exportedComponent[firstKey];
+      if (mockModule.exports) {
+        let Component = null;
+        
+        // Try to find the component in different export formats
+        if (typeof mockModule.exports === 'object') {
+          if (mockModule.exports.default) {
+            Component = mockModule.exports.default;
+          } else if (componentName && mockModule.exports[componentName]) {
+            Component = mockModule.exports[componentName];
+          } else if (Object.keys(mockModule.exports).length > 0) {
+            // Try the first exported component if multiple are exported
+            const firstKey = Object.keys(mockModule.exports)[0];
+            Component = mockModule.exports[firstKey];
+          }
+        } else if (typeof mockModule.exports === 'function') {
+          Component = mockModule.exports;
         }
-      } else if (typeof exportedComponent === 'function') {
-        Component = exportedComponent;
-      }
-      
-      // Look for components in the code based on common patterns
-      if (!Component) {
-        const componentMatch = code.match(/export\s+(?:const|function)\s+(\w+)/);
-        if (componentMatch && componentMatch[1]) {
-          const componentName = componentMatch[1];
-          // Try to extract it from the exports object
-          if (exportedComponent && exportedComponent[componentName]) {
-            Component = exportedComponent[componentName];
+        
+        if (Component) {
+          try {
+            return (
+              <ErrorBoundary>
+                <Component />
+              </ErrorBoundary>
+            );
+          } catch (error) {
+            console.error("Error rendering component:", error);
+            throw error;
           }
         }
       }
       
-      // Last resort: look for a return statement with JSX
-      if (!Component && code.includes('return (')) {
+      // Last resort for common component patterns
+      if (componentName) {
         try {
-          const returnMatch = code.match(/return\s+\(\s*<([^>]+)>/);
-          if (returnMatch) {
-            // Create a wrapper component with the return statement
-            const WrapperComponent = () => {
-              // eslint-disable-next-line no-new-func
-              const renderFunc = new Function('React', 'motion', 'require', `
-                ${code}
-                return React.createElement(${returnMatch[1]});
-              `);
-              try {
-                return renderFunc(React, motion, mockRequire);
-              } catch (error) {
-                console.error("Error rendering component:", error);
-                return <div className="text-red-500">Error rendering component</div>;
-              }
-            };
-            return <WrapperComponent />;
-          }
+          // Create a wrapper component that tries to render the named component
+          const WrapperComponent = () => {
+            // eslint-disable-next-line no-new-func
+            const renderFunc = new Function('React', 'motion', 'require', `
+              ${code}
+              return React.createElement(${componentName});
+            `);
+            return renderFunc(React, motion, mockRequire);
+          };
+          
+          return (
+            <ErrorBoundary>
+              <WrapperComponent />
+            </ErrorBoundary>
+          );
         } catch (error) {
-          console.error("Error extracting return statement:", error);
+          console.error("Error with wrapper component:", error);
         }
       }
       
-      // Render the component
-      return Component ? <Component /> : (
+      return (
         <div className="text-yellow-500">
           Could not render component. Make sure your code exports a React component either as default export or named export.
         </div>
@@ -213,6 +227,31 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       );
     }
   };
+
+  // Error boundary component to catch runtime errors
+  class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+    constructor(props: {children: React.ReactNode}) {
+      super(props);
+      this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+      return { hasError: true, error };
+    }
+
+    render() {
+      if (this.state.hasError) {
+        return (
+          <div className="p-4 bg-red-900/30 text-red-400 rounded-lg border border-red-500/30">
+            <h3 className="font-medium mb-2">Component Error</h3>
+            <pre className="text-sm overflow-auto">{this.state.error?.message}</pre>
+          </div>
+        );
+      }
+
+      return this.props.children;
+    }
+  }
 
   return (
     <div className="w-full h-full bg-gray-900 rounded-lg border border-gray-800 overflow-auto">

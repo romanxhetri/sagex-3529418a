@@ -1,5 +1,5 @@
-
 import { toast } from "sonner";
+import { CodeImplementor } from "@/utils/codeImplementor";
 
 // Interface for update tasks
 export interface UpdateTask {
@@ -196,11 +196,15 @@ class AIAutoUpdater {
 
   // Implement the changes in a task
   private implementChange(task: UpdateTask): void {
-    // In a real system, this would actually modify the codebase
-    // For now, we'll just simulate it with a toast notification
-    toast.success('Code changes implemented', {
-      description: `Changes for "${task.description}" have been applied to the app`
-    });
+    // Use the CodeImplementor to actually implement the code
+    CodeImplementor.implementCode(task)
+      .then(success => {
+        if (success) {
+          console.log(`[AIAutoUpdater] Successfully implemented task: ${task.id}`);
+        } else {
+          console.error(`[AIAutoUpdater] Failed to implement task: ${task.id}`);
+        }
+      });
   }
 
   // Determine task type based on command content
