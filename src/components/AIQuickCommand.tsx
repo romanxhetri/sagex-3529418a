@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Bot, X, Zap, Laptop, Phone, InfoIcon, Settings } from "lucide-react";
+import { Send, Sparkles, Bot, X, Zap, Laptop, Phone, InfoIcon, Settings, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -109,7 +109,7 @@ export const AIQuickCommand = () => {
           description: command
         });
         
-        setTimeout(() => navigate("/updates"), 1500);
+        setTimeout(() => navigate("/updates"), 1000);
       }
       // Check for find/search commands 
       else if (commandLower.includes("find") || commandLower.includes("search") || 
@@ -160,18 +160,20 @@ export const AIQuickCommand = () => {
   // Create dynamic suggestion buttons based on current context
   const renderSuggestions = () => {
     return suggestions.map((suggestion, index) => (
-      <button
+      <motion.button
         key={index}
         type="button"
         onClick={() => setCommand(suggestion)}
         className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 rounded text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         {suggestion.toLowerCase().includes('laptop') && <Laptop size={12} />}
         {suggestion.toLowerCase().includes('mobile') && <Phone size={12} />}
         {suggestion.toLowerCase().includes('update') && <Zap size={12} />}
         {suggestion.toLowerCase().includes('feature') && <Sparkles size={12} />}
         {suggestion}
-      </button>
+      </motion.button>
     ));
   };
 
@@ -210,13 +212,14 @@ export const AIQuickCommand = () => {
 
             {aiResponse && (
               <div className="p-4 bg-purple-900/20 border-b border-glass-border">
-                <motion.p 
+                <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-sm text-white"
+                  className="flex items-start gap-2"
                 >
-                  {aiResponse}
-                </motion.p>
+                  <Bot size={16} className="text-purple-400 mt-0.5" />
+                  <p className="text-sm text-white">{aiResponse}</p>
+                </motion.div>
               </div>
             )}
 
@@ -238,17 +241,17 @@ export const AIQuickCommand = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Send size={16} />
+                  {isProcessing ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> : <Send size={16} />}
                 </motion.button>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {renderSuggestions()}
               </div>
               
               <div className="mt-4 pt-3 border-t border-gray-800 flex justify-between text-xs text-gray-500">
                 <div className="flex items-center">
-                  <InfoIcon size={12} className="mr-1" />
+                  <Check size={12} className="mr-1 text-green-500" />
                   <span>Auto-updates enabled</span>
                 </div>
                 <button 

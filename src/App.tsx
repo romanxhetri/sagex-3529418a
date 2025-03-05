@@ -3,35 +3,83 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect, lazy, Suspense } from "react";
 import Index from "./pages/Index";
-import Chat from "./pages/Chat";
-import Laptops from "./pages/Laptops";
-import Mobiles from "./pages/Mobiles";
-import Updates from "./pages/Updates";
-import NotFound from "./pages/NotFound";
-import { AppIntro } from "./components/AppIntro";
-import { MagicalUniverseScene } from "./components/MagicalUniverseScene";
 import { AIQuickCommand } from "./components/AIQuickCommand";
 
+// Lazy loading components to improve initial load time
+const Chat = lazy(() => import("./pages/Chat"));
+const Laptops = lazy(() => import("./pages/Laptops"));
+const Mobiles = lazy(() => import("./pages/Mobiles"));
+const Updates = lazy(() => import("./pages/Updates"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
+const MagicalUniverseScene = lazy(() => import("./components/MagicalUniverseScene").then(module => ({ default: module.MagicalUniverseScene })));
+
+// Loading fallback
+const LoadingFallback = () => (
+  <div className="h-screen w-screen flex items-center justify-center bg-gray-900">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+  </div>
+);
+
+// Create a performant query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,
-      retry: 2
+      retry: 2,
+      refetchOnWindowFocus: false, // Disable refetching on window focus for better performance
+      cacheTime: 10 * 60 * 1000 // 10 minutes cache time
     }
   }
 });
+
+// Route component to manage scene rendering
+const AppRoutes = () => {
+  const location = useLocation();
+  const [showScene, setShowScene] = useState(true);
+  
+  // Optimize scene rendering based on route
+  useEffect(() => {
+    // Don't show scene on routes that have their own 3D elements
+    const routesWithoutScene = ['/updates'];
+    setShowScene(!routesWithoutScene.includes(location.pathname));
+  }, [location]);
+  
+  return (
+    <>
+      {showScene && (
+        <Suspense fallback={<div className="fixed inset-0 bg-gray-900" />}>
+          <MagicalUniverseScene />
+        </Suspense>
+      )}
+      
+      <AIQuickCommand />
+      
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/laptops" element={<Laptops />} />
+          <Route path="/mobiles" element={<Mobiles />} />
+          <Route path="/updates" element={<Updates />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
+  );
+};
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
-    // Hide intro after 10 seconds
+    // Hide intro after 8 seconds (reduced from 10)
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 10000);
+    }, 8000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -41,18 +89,15 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {showIntro && <AppIntro />}
-        <MagicalUniverseScene />
+        
+        {showIntro && (
+          <Suspense fallback={<div className="fixed inset-0 bg-gray-900" />}>
+            <AppIntro />
+          </Suspense>
+        )}
+        
         <BrowserRouter>
-          <AIQuickCommand />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/laptops" element={<Laptops />} />
-            <Route path="/mobiles" element={<Mobiles />} />
-            <Route path="/updates" element={<Updates />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

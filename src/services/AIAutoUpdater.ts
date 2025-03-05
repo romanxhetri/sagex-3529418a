@@ -41,7 +41,7 @@ class AIAutoUpdater {
     this.isRunning = true;
     this.updateInterval = window.setInterval(() => {
       this.processTasks();
-    }, 30000); // Check for tasks every 30 seconds (faster than before)
+    }, 15000); // Check for tasks every 15 seconds (faster than before)
     
     console.log('AI Auto Updater service started');
     toast('AI Auto Updater is now monitoring your app');
@@ -68,7 +68,6 @@ class AIAutoUpdater {
 
   // Add a new task from user command
   public addTaskFromUserCommand(command: string): void {
-    const taskTypes = ['feature', 'bugfix', 'enhancement', 'refactor'] as const;
     const type = this.determineTaskType(command);
     
     const newTask: UpdateTask = {
@@ -114,8 +113,15 @@ class AIAutoUpdater {
     const task = this.updateTasks.find(t => t.id === taskId);
     if (task) {
       task.code = code;
+      task.status = 'completed';
+      task.completedAt = new Date();
       this.saveTasks();
       this.notifyListeners();
+      
+      // Auto-implement if enabled
+      if (this.autoImplementEnabled) {
+        this.implementChange(task);
+      }
     }
   }
 
@@ -156,14 +162,14 @@ class AIAutoUpdater {
       description: taskToProcess.description
     });
     
-    // Generate sample code based on task type and description
+    // Generate code based on task type and description
     const generatedCode = this.generateSampleCode(taskToProcess);
     taskToProcess.code = generatedCode;
     
     // Simulate AI processing the task
     setTimeout(() => {
-      // 90% chance of success (increased from 80%)
-      if (Math.random() < 0.9) {
+      // 95% chance of success (increased from 90%)
+      if (Math.random() < 0.95) {
         taskToProcess.status = 'completed';
         taskToProcess.completedAt = new Date();
         
@@ -185,7 +191,7 @@ class AIAutoUpdater {
       
       this.saveTasks();
       this.notifyListeners();
-    }, 3000 + Math.random() * 5000); // Faster processing time (3-8 seconds)
+    }, 2000 + Math.random() * 3000); // Faster processing time (2-5 seconds)
   }
 
   // Implement the changes in a task
@@ -265,7 +271,7 @@ class AIAutoUpdater {
   }
   
   // Generate feature code
-  private generateFeatureCode(description: string): string {
+  public generateFeatureCode(description: string): string {
     const lowerDesc = description.toLowerCase();
     
     if (lowerDesc.includes('button')) {
@@ -524,6 +530,6 @@ export const aiAutoUpdater = new AIAutoUpdater();
 // Auto-start the service when imported
 setTimeout(() => {
   aiAutoUpdater.start();
-}, 2000);
+}, 1000); // Start faster
 
 export default aiAutoUpdater;

@@ -76,9 +76,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
           Component = exportedComponent.default;
         } else if (exportedComponent.Component) {
           Component = exportedComponent.Component;
-        } else if (typeof exportedComponent === 'function') {
-          Component = exportedComponent;
+        } else if (Object.keys(exportedComponent).length > 0) {
+          // Try the first exported component if multiple are exported
+          const firstKey = Object.keys(exportedComponent)[0];
+          Component = exportedComponent[firstKey];
         }
+      } else if (typeof exportedComponent === 'function') {
+        Component = exportedComponent;
       }
       
       // Render the component
