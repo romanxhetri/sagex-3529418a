@@ -17,13 +17,17 @@ import {
   FileCode,
   Bug,
   Mic,
-  Braces
+  Braces,
+  Bot,
+  Rocket
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CodeEditor } from "@/components/updates/CodeEditor";
 import { ReasoningProcess } from "@/components/updates/ReasoningProcess";
 import { LivePreview } from "@/components/updates/LivePreview";
 import { VoiceCommandListener } from "@/components/updates/VoiceCommandListener";
+import { AIUpdateFeatureList } from "@/components/updates/AIUpdateFeatureList";
+import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 
 const Updates = () => {
   const [prompt, setPrompt] = useState("");
@@ -35,8 +39,26 @@ const Updates = () => {
   const [currentThought, setCurrentThought] = useState("");
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [generatedReasoning, setGeneratedReasoning] = useState("");
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const { toast } = useToast();
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check for pending update requests from the command interface
+  useEffect(() => {
+    const pendingRequest = localStorage.getItem("pendingUpdateRequest");
+    if (pendingRequest) {
+      setPrompt(pendingRequest);
+      localStorage.removeItem("pendingUpdateRequest");
+      
+      // Auto-generate if it's from the command interface
+      setTimeout(() => {
+        if (promptInputRef.current) {
+          promptInputRef.current.focus();
+          handleGenerate();
+        }
+      }, 1000);
+    }
+  }, []);
 
   // Handle voice commands
   const handleVoiceCommand = (command: string) => {
@@ -81,6 +103,24 @@ const Updates = () => {
     else {
       // Use the command as a prompt
       setPrompt(command);
+    }
+  };
+
+  const toggleAutoUpdate = () => {
+    if (autoUpdateEnabled) {
+      aiAutoUpdater.stop();
+      setAutoUpdateEnabled(false);
+      toast({
+        title: "Auto Updates Disabled",
+        description: "SageX AI will no longer automatically apply updates",
+      });
+    } else {
+      aiAutoUpdater.start();
+      setAutoUpdateEnabled(true);
+      toast({
+        title: "Auto Updates Enabled",
+        description: "SageX AI will now automatically apply updates",
+      });
     }
   };
 
@@ -399,219 +439,278 @@ export const ProfileCard = ({
 // Render the component
 return <ProfileCard />;`;
       }
-      else if (prompt.toLowerCase().includes("chart") || prompt.toLowerCase().includes("analytics")) {
-        sampleCode = `// Animated Analytics Dashboard Component
+      else if (prompt.toLowerCase().includes("ai") || prompt.toLowerCase().includes("update") || prompt.toLowerCase().includes("auto")) {
+        sampleCode = `// AI-Powered Self-Updating Component with Auto-Deployment
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
+import { Bot, Code, Zap, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { aiAutoUpdater, UpdateTask } from '@/services/AIAutoUpdater';
 
-// Sample data
-const generateRandomData = () => {
-  const data = [];
-  for (let i = 0; i < 7; i++) {
-    data.push({
-      name: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-      users: Math.floor(Math.random() * 1000) + 500,
-      revenue: Math.floor(Math.random() * 5000) + 1000,
-      sessions: Math.floor(Math.random() * 2000) + 800,
-    });
-  }
-  return data;
-};
+const STEPS = [
+  { id: 'scan', label: 'Scanning Codebase', icon: <Code size={20} /> },
+  { id: 'analyze', label: 'Analyzing Requirements', icon: <Bot size={20} /> },
+  { id: 'generate', label: 'Generating Code', icon: <Zap size={20} /> },
+  { id: 'test', label: 'Testing Changes', icon: <AlertCircle size={20} /> },
+  { id: 'deploy', label: 'Deploying Updates', icon: <RefreshCw size={20} /> },
+  { id: 'complete', label: 'Update Complete', icon: <Check size={20} /> }
+];
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
-
-export const AnalyticsDashboard = () => {
-  const [data, setData] = useState(generateRandomData());
-  const [hoverInfo, setHoverInfo] = useState(null);
+export const AIAutoUpdateManager = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [autoMode, setAutoMode] = useState(true);
+  const [deployedTasks, setDeployedTasks] = useState<string[]>([]);
+  const [pendingUpdates, setPendingUpdates] = useState<UpdateTask[]>([]);
+  const [activeFeature, setActiveFeature] = useState('');
+  const [logs, setLogs] = useState<string[]>([]);
   
-  // Refresh data every 10 seconds
+  // Simulate updating process with step progression
   useEffect(() => {
-    const interval = setInterval(() => {
-      setData(generateRandomData());
-    }, 10000);
+    if (currentStep < STEPS.length - 1) {
+      const timer = setTimeout(() => {
+        setCurrentStep(prevStep => prevStep + 1);
+        addLog(\`Completed \${STEPS[currentStep].label}\`);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
     
-    return () => clearInterval(interval);
+    if (currentStep === STEPS.length - 1) {
+      const timer = setTimeout(() => {
+        // Reset to step 0 after completion and add to deployed tasks
+        setCurrentStep(0);
+        if (activeFeature) {
+          setDeployedTasks(prev => [...prev, activeFeature]);
+          setActiveFeature('');
+          
+          if (pendingUpdates.length > 0) {
+            // Start next update
+            const nextUpdate = pendingUpdates[0];
+            setPendingUpdates(prev => prev.slice(1));
+            setActiveFeature(nextUpdate.description);
+            addLog(\`Starting new update: \${nextUpdate.description}\`);
+          }
+        }
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, activeFeature, pendingUpdates]);
+  
+  // Add log with timestamp
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev, \`[\${timestamp}] \${message}\`]);
+  };
+  
+  // Start a new update manually
+  const startNewUpdate = (description: string) => {
+    if (activeFeature) {
+      // Queue the update if one is in progress
+      setPendingUpdates(prev => [...prev, {
+        id: Date.now().toString(),
+        description,
+        status: 'pending',
+        priority: 'medium',
+        createdAt: new Date(),
+        type: 'feature'
+      }]);
+      addLog(\`Queued new update: \${description}\`);
+    } else {
+      // Start immediately if no update is in progress
+      setActiveFeature(description);
+      setCurrentStep(0);
+      addLog(\`Starting new update: \${description}\`);
+    }
+  };
+  
+  // Add some sample updates from the AI auto updater
+  useEffect(() => {
+    aiAutoUpdater.subscribe((tasks) => {
+      const completedTasks = tasks.filter(t => t.status === 'completed');
+      
+      if (completedTasks.length > deployedTasks.length) {
+        // New completed tasks
+        const newCompletedTasks = completedTasks.slice(deployedTasks.length);
+        for (const task of newCompletedTasks) {
+          if (!deployedTasks.includes(task.description)) {
+            setDeployedTasks(prev => [...prev, task.description]);
+            addLog(\`Received completed update from Auto Updater: \${task.description}\`);
+          }
+        }
+      }
+    });
+    
+    // Add sample log entries
+    setTimeout(() => {
+      addLog('AI Auto Update system initialized');
+      addLog('Connected to codebase repository');
+      addLog('Running background analysis...');
+    }, 1000);
   }, []);
   
-  // Stats cards data
-  const stats = [
-    { title: 'Total Users', value: '32,489', icon: <Users size={24} />, color: 'from-blue-500 to-indigo-600' },
-    { title: 'Revenue', value: '$126,800', icon: <DollarSign size={24} />, color: 'from-green-500 to-emerald-600' },
-    { title: 'Growth', value: '+28.4%', icon: <TrendingUp size={24} />, color: 'from-purple-500 to-pink-600' },
-    { title: 'Engagement', value: '18.2 min', icon: <Activity size={24} />, color: 'from-yellow-500 to-orange-600' },
-  ];
-  
-  // Pie chart data
-  const pieData = [
-    { name: 'Mobile', value: 55 },
-    { name: 'Desktop', value: 30 },
-    { name: 'Tablet', value: 15 },
-  ];
-  
   return (
-    <div className="p-6 bg-gray-900 rounded-xl">
-      <motion.h2 
-        className="text-2xl font-bold text-white mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        Analytics Dashboard
-      </motion.h2>
-      
-      {/* Stats Cards */}
-      <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            className={\`p-4 rounded-lg bg-gradient-to-r \${stat.color} shadow-lg\`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 * index }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-white/80 text-sm font-medium">{stat.title}</p>
-                <p className="text-white text-2xl font-bold mt-1">{stat.value}</p>
-              </div>
-              <div className="p-2 bg-white/20 rounded-lg">
-                {stat.icon}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-      
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Line Chart */}
-        <motion.div 
-          className="lg:col-span-2 bg-gray-800 p-4 rounded-lg shadow-lg"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <h3 className="text-lg font-medium text-white mb-4">User Activity</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={data}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="name" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#333', border: 'none', borderRadius: '4px' }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Area type="monotone" dataKey="users" stroke="#8884d8" fillOpacity={1} fill="url(#colorUsers)" />
-                <Area type="monotone" dataKey="sessions" stroke="#82ca9d" fillOpacity={1} fill="url(#colorSessions)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-        
-        {/* Pie Chart */}
-        <motion.div 
-          className="bg-gray-800 p-4 rounded-lg shadow-lg"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <h3 className="text-lg font-medium text-white mb-4">Device Distribution</h3>
-          <div className="h-80 flex flex-col items-center justify-center">
-            <ResponsiveContainer width="100%" height="80%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => \`\${name} \${(percent * 100).toFixed(0)}%\`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#333', border: 'none', borderRadius: '4px' }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center space-x-4 mt-4">
-              {pieData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center">
-                  <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span className="text-xs text-gray-300">{entry.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-        
-        {/* Bar Chart */}
-        <motion.div 
-          className="lg:col-span-3 bg-gray-800 p-4 rounded-lg shadow-lg"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <h3 className="text-lg font-medium text-white mb-4">Revenue Overview</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="name" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#333', border: 'none', borderRadius: '4px' }}
-                  itemStyle={{ color: '#fff' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Bar dataKey="revenue" fill="#8884d8" radius={[4, 4, 0, 0]}>
-                  {data.map((entry, index) => (
-                    <Cell key={\`cell-\${index}\`} fill={\`#\${Math.floor(Math.random() * 0x7fffff + 0x800000).toString(16)}\`} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+    <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+      <div className="p-4 border-b border-gray-800">
+        <h3 className="text-lg font-bold text-white flex items-center">
+          <Bot className="text-purple-400 mr-2" size={20} />
+          SageX AI Auto-Update System
+        </h3>
+        <p className="text-gray-400 text-sm">
+          AI-powered code generation and deployment
+        </p>
       </div>
+      
+      <div className="p-4">
+        {/* Progress Steps */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            {STEPS.map((step, index) => (
+              <div 
+                key={step.id}
+                className="flex flex-col items-center"
+              >
+                <motion.div
+                  className={\`w-10 h-10 rounded-full flex items-center justify-center 
+                    \${index < currentStep 
+                      ? 'bg-green-500 text-white' 
+                      : index === currentStep 
+                        ? 'bg-purple-500 text-white animate-pulse' 
+                        : 'bg-gray-800 text-gray-400'}\`}
+                  initial={{ scale: 0.8 }}
+                  animate={{ 
+                    scale: index === currentStep ? [1, 1.1, 1] : 1,
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: index === currentStep ? Infinity : 0,
+                    repeatType: 'reverse'
+                  }}
+                >
+                  {step.icon}
+                </motion.div>
+                <span className={\`text-xs mt-2 \${index === currentStep ? 'text-purple-400' : 'text-gray-400'}\`}>
+                  {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="relative h-1 bg-gray-800 mt-4 rounded-full overflow-hidden">
+            <motion.div 
+              className="absolute top-0 left-0 h-full bg-purple-500"
+              initial={{ width: 0 }}
+              animate={{ width: \`\${(currentStep / (STEPS.length - 1)) * 100}%\` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+        </div>
+        
+        {/* Current Update */}
+        <div className="mb-6">
+          <h4 className="text-md font-semibold text-white mb-2">Current Update</h4>
+          {activeFeature ? (
+            <div className="bg-gray-800 rounded-lg p-3 border border-purple-500/30">
+              <p className="text-white">{activeFeature}</p>
+              <div className="mt-2 flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse mr-2"></div>
+                  <span className="text-sm text-purple-400">
+                    {STEPS[currentStep].label}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => {
+                    addLog('Update process accelerated');
+                    setCurrentStep(STEPS.length - 1);
+                  }}
+                  className="text-xs bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-white"
+                >
+                  Speed Up
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700 text-gray-400">
+              No active updates
+            </div>
+          )}
+        </div>
+        
+        {/* Auto-Mode Toggle */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h4 className="text-md font-semibold text-white">Auto-Update Mode</h4>
+            <p className="text-sm text-gray-400">
+              Let AI automatically analyze, update and deploy changes
+            </p>
+          </div>
+          <div 
+            onClick={() => {
+              setAutoMode(!autoMode);
+              addLog(\`Auto-Update mode \${!autoMode ? 'enabled' : 'disabled'}\`);
+            }}
+            className={\`w-14 h-7 rounded-full relative cursor-pointer \${autoMode ? 'bg-purple-600' : 'bg-gray-700'}\`}
+          >
+            <motion.div 
+              className="w-5 h-5 rounded-full bg-white absolute top-1"
+              animate={{ left: autoMode ? '8px' : '1px' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            />
+          </div>
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="mb-6">
+          <h4 className="text-md font-semibold text-white mb-2">Quick Actions</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={() => startNewUpdate('Optimize application performance')}
+              className="py-2 px-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 text-white text-sm flex items-center justify-center"
+            >
+              <Zap size={16} className="text-yellow-400 mr-1" />
+              Performance Update
+            </button>
+            <button 
+              onClick={() => startNewUpdate('Add dark/light theme toggle')}
+              className="py-2 px-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 text-white text-sm flex items-center justify-center"
+            >
+              <RefreshCw size={16} className="text-blue-400 mr-1" />
+              Add Theme Toggle
+            </button>
+          </div>
+        </div>
+        
+        {/* Recent Logs */}
+        <div>
+          <h4 className="text-md font-semibold text-white mb-2">System Logs</h4>
+          <div className="bg-gray-950 rounded-lg border border-gray-800 p-2 h-32 overflow-y-auto font-mono text-xs">
+            {logs.map((log, index) => (
+              <div key={index} className="text-gray-400 mb-1">{log}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Deployed Updates */}
+      {deployedTasks.length > 0 && (
+        <div className="p-4 border-t border-gray-800">
+          <h4 className="text-md font-semibold text-white mb-2">Recently Deployed Updates</h4>
+          <div className="space-y-2">
+            {deployedTasks.map((task, index) => (
+              <div key={index} className="bg-gray-800 rounded p-2 flex items-center">
+                <Check size={16} className="text-green-400 mr-2" />
+                <span className="text-sm text-white">{task}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Render the component
-return <AnalyticsDashboard />;`;
+return <AIAutoUpdateManager />;`;
       }
       else {
         // Default code example
@@ -762,6 +861,9 @@ return <MagicalFeature />;`;
         title: "Generation complete",
         description: "Your code has been generated successfully!",
       });
+
+      // Add to auto updater
+      aiAutoUpdater.addTask(prompt, "feature");
       
     } catch (error) {
       console.error("Error:", error);
@@ -796,10 +898,21 @@ return <MagicalFeature />;`;
         >
           <div className="p-4 border-b border-glass-border flex items-center justify-between">
             <div className="flex items-center">
-              <Zap className="text-purple-400 mr-2" size={20} />
-              <h2 className="text-xl font-semibold text-white">SageX AI Engine</h2>
+              <Bot className="text-purple-400 mr-2" size={20} />
+              <h2 className="text-xl font-semibold text-white">SageX AI Self-Update System</h2>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleAutoUpdate}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  autoUpdateEnabled ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-300'
+                }`}
+                title={autoUpdateEnabled ? "Disable auto updates" : "Enable auto updates"}
+              >
+                <Rocket size={16} className="inline mr-1" />
+                {autoUpdateEnabled ? "Auto On" : "Auto Off"}
+              </button>
+              
               <VoiceCommandListener 
                 onCommand={handleVoiceCommand}
                 isListening={isVoiceListening}
@@ -893,7 +1006,7 @@ return <MagicalFeature />;`;
               </div>
               
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
-                {['Create button', 'Add card component', 'Chart visualization', 'User profile'].map((suggestion) => (
+                {['Create button', 'Add card component', 'Chart visualization', 'AI auto-update'].map((suggestion) => (
                   <motion.button
                     key={suggestion}
                     onClick={() => setPrompt(suggestion)}
@@ -904,6 +1017,10 @@ return <MagicalFeature />;`;
                     {suggestion}
                   </motion.button>
                 ))}
+              </div>
+              
+              <div className="mt-6">
+                <AIUpdateFeatureList />
               </div>
               
               <div className="mt-6 space-y-2 text-gray-200">

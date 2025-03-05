@@ -13,6 +13,7 @@ import Updates from "./pages/Updates";
 import NotFound from "./pages/NotFound";
 import { AppIntro } from "./components/AppIntro";
 import { MagicalUniverseScene } from "./components/MagicalUniverseScene";
+import { AIQuickCommand } from "./components/AIQuickCommand";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,7 @@ const App = () => {
         {showIntro && <AppIntro />}
         <MagicalUniverseScene />
         <BrowserRouter>
+          <AIQuickCommand />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
