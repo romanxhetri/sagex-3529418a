@@ -67,10 +67,12 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
       
       // Check if the component was exported
-      const Component = mockModule.exports.default || mockModule.exports;
+      const Component = mockModule.exports.default || 
+                        mockModule.exports.Component || 
+                        mockModule.exports; // Try alternative export names if default doesn't exist
       
       // Render the component
-      return <Component />;
+      return Component ? <Component /> : <div className="text-yellow-500">No component exported</div>;
     } catch (error) {
       console.error('Error rendering component:', error);
       setErrorMessage((error as Error).message);

@@ -39,7 +39,7 @@ export const MagicalUniverseScene: React.FC = () => {
   const weatherEffectsRef = useRef<{
     currentEffect: 'thunder' | 'fire' | 'wind' | 'rain' | null;
     particleSystem: THREE.Points | null;
-    lightning: THREE.PointLight | null;
+    lightning: THREE.PointLight | THREE.AmbientLight | null; // Changed to allow both PointLight and AmbientLight
   }>({ currentEffect: null, particleSystem: null, lightning: null });
 
   useEffect(() => {
