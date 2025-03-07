@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play } from "lucide-react";
+import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play, Trash } from "lucide-react";
 import { aiAutoUpdater, UpdateTask } from "@/services/AIAutoUpdater";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LivePreview } from "./LivePreview";
-import { CodeImplementor } from "@/utils/codeImplementor";
 import { AIAutoUpdaterIntegration } from "@/services/AIAutoUpdaterIntegration";
 
 export const AIUpdateFeatureList: React.FC = () => {
@@ -15,6 +14,7 @@ export const AIUpdateFeatureList: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<UpdateTask | null>(null);
   const [autoImplementEnabled, setAutoImplementEnabled] = useState(true);
   const [isImplementing, setIsImplementing] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     // Initial load
@@ -25,10 +25,31 @@ export const AIUpdateFeatureList: React.FC = () => {
       setTasks(updatedTasks);
     });
     
+    // Listen for storage events to refresh tasks
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'aiAutoUpdaterTasks') {
+        try {
+          const updatedTasks = JSON.parse(e.newValue || '[]');
+          setTasks(updatedTasks);
+        } catch (error) {
+          console.error("Error parsing tasks from storage:", error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [refreshCounter]);
+
+  const refreshTasks = () => {
+    setRefreshCounter(prev => prev + 1);
+    setTasks(aiAutoUpdater.getTasks());
+    toast.success("Tasks refreshed");
+  };
 
   const filteredTasks = filter === 'all' 
     ? tasks 
@@ -70,6 +91,17 @@ export const AIUpdateFeatureList: React.FC = () => {
     setSelectedTask(task);
   };
 
+  const handleDeleteTask = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedTasks = tasks.filter(t => t.id !== taskId);
+    localStorage.setItem('aiAutoUpdaterTasks', JSON.stringify(updatedTasks));
+    setTasks(updatedTasks);
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(null);
+    }
+    toast.success("Task removed");
+  };
+
   const handleImplementCode = async (task: UpdateTask) => {
     if (!task.code) {
       toast.error("No code available to implement");
@@ -87,13 +119,19 @@ export const AIUpdateFeatureList: React.FC = () => {
           description: "The feature has been added to your app."
         });
         
-        // Update the task list
+        // Update the task list with the new status
         const updatedTasks = tasks.map(t => 
           t.id === task.id 
             ? { ...t, status: 'completed' as const } 
             : t
         );
+        
+        // Update local storage and state
+        localStorage.setItem('aiAutoUpdaterTasks', JSON.stringify(updatedTasks));
         setTasks(updatedTasks);
+        
+        // Refresh tasks to ensure everything is in sync
+        setTimeout(refreshTasks, 1000);
       } else {
         toast.error("Failed to implement code", {
           description: "Check the console for more details."
@@ -117,6 +155,16 @@ export const AIUpdateFeatureList: React.FC = () => {
           </h3>
           
           <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshTasks}
+              className="text-xs"
+            >
+              <RefreshCcw size={14} className="mr-1" />
+              Refresh
+            </Button>
+            
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as UpdateTask['status'] | 'all')}
@@ -153,6 +201,26 @@ export const AIUpdateFeatureList: React.FC = () => {
               if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                 aiAutoUpdater.addTaskFromUserCommand(e.currentTarget.value);
                 e.currentTarget.value = '';
+                
+                // Auto-process the task immediately
+                setTimeout(() => {
+                  const tasks = aiAutoUpdater.getTasks();
+                  const latestTask = tasks[tasks.length - 1];
+                  if (latestTask && latestTask.status === 'pending') {
+                    const updatedTasks = tasks.map(t => 
+                      t.id === latestTask.id 
+                        ? { ...t, status: 'in-progress' as const } 
+                        : t
+                    );
+                    localStorage.setItem('aiAutoUpdaterTasks', JSON.stringify(updatedTasks));
+                    
+                    // Generate code and implement
+                    setTimeout(() => {
+                      const generatedCode = aiAutoUpdater.generateFeatureCode(latestTask.description);
+                      aiAutoUpdater.addCodeToTask(latestTask.id, generatedCode);
+                    }, 500);
+                  }
+                }, 100);
               }
             }}
           />
@@ -165,10 +233,32 @@ export const AIUpdateFeatureList: React.FC = () => {
             <div className="text-center py-6 text-gray-400">
               <p>No AI update tasks found</p>
               <Button 
-                onClick={() => aiAutoUpdater.addTask('Improve app performance', 'enhancement', 'medium')}
+                onClick={() => {
+                  aiAutoUpdater.addTask('Add a tutorial button', 'feature', 'medium');
+                  
+                  // Auto-process the task immediately
+                  setTimeout(() => {
+                    const tasks = aiAutoUpdater.getTasks();
+                    const latestTask = tasks[tasks.length - 1];
+                    if (latestTask && latestTask.status === 'pending') {
+                      const updatedTasks = tasks.map(t => 
+                        t.id === latestTask.id 
+                          ? { ...t, status: 'in-progress' as const } 
+                          : t
+                      );
+                      localStorage.setItem('aiAutoUpdaterTasks', JSON.stringify(updatedTasks));
+                      
+                      // Generate code and implement
+                      setTimeout(() => {
+                        const generatedCode = aiAutoUpdater.generateFeatureCode(latestTask.description);
+                        aiAutoUpdater.addCodeToTask(latestTask.id, generatedCode);
+                      }, 500);
+                    }
+                  }, 100);
+                }}
                 className="mt-2"
               >
-                Create Sample Task
+                Create Tutorial Button
               </Button>
             </div>
           ) : (
@@ -214,9 +304,9 @@ export const AIUpdateFeatureList: React.FC = () => {
                         </button>
                       )}
                       
-                      {task.code && (
+                      {task.code && task.status !== 'completed' && (
                         <button 
-                          className={`text-xs ${task.status === 'completed' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} p-1 rounded text-white`}
+                          className="text-xs bg-purple-600 hover:bg-purple-700 p-1 rounded text-white"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleImplementCode(task);
@@ -241,18 +331,25 @@ export const AIUpdateFeatureList: React.FC = () => {
                                 ? { ...t, status: 'in-progress' as const } 
                                 : t
                             );
+                            localStorage.setItem('aiAutoUpdaterTasks', JSON.stringify(updatedTasks));
                             setTasks(updatedTasks);
+                            
                             setTimeout(() => {
-                              aiAutoUpdater.addCodeToTask(
-                                task.id, 
-                                aiAutoUpdater['generateFeatureCode'](task.description)
-                              );
-                            }, 1000);
+                              const generatedCode = aiAutoUpdater.generateFeatureCode(task.description);
+                              aiAutoUpdater.addCodeToTask(task.id, generatedCode);
+                            }, 500);
                           }}
                         >
                           Process
                         </button>
                       )}
+                      
+                      <button 
+                        className="text-xs bg-red-600 hover:bg-red-700 p-1 rounded text-white"
+                        onClick={(e) => handleDeleteTask(task.id, e)}
+                      >
+                        <Trash size={14} />
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -266,7 +363,7 @@ export const AIUpdateFeatureList: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-white">Generated Code</h3>
-                {selectedTask.code && (
+                {selectedTask.code && selectedTask.status !== 'completed' && (
                   <Button 
                     size="sm"
                     onClick={() => handleImplementCode(selectedTask)}
@@ -280,7 +377,7 @@ export const AIUpdateFeatureList: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Play size={14} />
+                        <Play size={14} className="mr-1" />
                         Implement Now
                       </>
                     )}
@@ -296,7 +393,7 @@ export const AIUpdateFeatureList: React.FC = () => {
               
               <div>
                 <h4 className="text-md font-semibold text-white mb-2">Preview</h4>
-                <div className="h-[200px]">
+                <div className="h-[200px] bg-gray-900 rounded-lg overflow-hidden">
                   <LivePreview code={selectedTask.code} />
                 </div>
               </div>
