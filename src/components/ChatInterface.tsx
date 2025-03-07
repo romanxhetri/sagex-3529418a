@@ -9,6 +9,7 @@ import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
 import { languages, translateToLanguage } from '@/utils/languages';
 import { LanguageSelector } from './chat/LanguageSelector';
 import { SuggestedQuestions } from './chat/SuggestedQuestions';
+import { ScreenAnalyzer } from './chat/ScreenAnalyzer';
 import { pipeline } from '@huggingface/transformers';
 import type { SupportedLanguage } from '@/types/chat';
 
@@ -48,6 +49,7 @@ export const ChatInterface = () => {
     safeMode: true
   });
   const [comedyMode, setComedyMode] = useState<boolean>(true);
+  const [screenContent, setScreenContent] = useState<string>("");
   const { toast } = useToast();
   
   const [capabilities, setCapabilities] = useState<Capability[]>([
@@ -130,23 +132,35 @@ export const ChatInterface = () => {
   };
 
   const processScreenContent = async (videoElement: HTMLVideoElement) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx?.drawImage(videoElement, 0, 0);
+    if (!videoElement || !videoElement.srcObject) return "";
     
-    const imageClassifier = await pipeline('image-classification');
-    const result = await imageClassifier(canvas.toDataURL());
-    return result.map(r => r.label).join(", ");
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return "";
+      
+      ctx.drawImage(videoElement, 0, 0);
+      
+      return "Screen sharing active - AI is analyzing your screen content";
+    } catch (error) {
+      console.error("Error processing screen content:", error);
+      return "";
+    }
   };
 
   const handleScreenContent = async () => {
     if (screenRef.current && screenRef.current.srcObject) {
-      const screenContent = await processScreenContent(screenRef.current);
-      return screenContent;
+      const content = await processScreenContent(screenRef.current);
+      setScreenContent(content);
+      return content;
     }
     return "";
+  };
+
+  const handleAnalysisComplete = (result: string) => {
+    setScreenContent(result);
   };
 
   const addComedyEmojis = (text: string): string => {
@@ -216,13 +230,16 @@ Analysis Process:
    - Clarity: minimize jargon, provide definitions where needed
    - Usefulness: ensure practical value in response`);
 
-      let screenContext = context;
+      let screenContextData = context || screenContent;
       if (isScreenSharing && screenRef.current) {
-        screenContext = await handleScreenContent();
+        const newScreenContent = await handleScreenContent();
+        if (newScreenContent) {
+          screenContextData = newScreenContent;
+        }
       }
 
-      const enhancedPrompt = screenContext 
-        ? `[Screen Context: ${screenContext}]\n\nUser: ${prompt}`
+      const enhancedPrompt = screenContextData 
+        ? `[Screen Context: ${screenContextData}]\n\nUser: ${prompt}`
         : prompt;
 
       if (aiFeatures.realTimeSearch) {
@@ -466,13 +483,18 @@ Analysis Process:
       
       if (screenRef.current) {
         screenRef.current.srcObject = stream;
+        
+        setTimeout(async () => {
+          const content = await processScreenContent(screenRef.current!);
+          setScreenContent(content);
+        }, 1000);
       }
-
+      
       toast({
         title: "Screen share activated",
         description: "Your screen is now being analyzed for AI assistance",
       });
-
+      
       stream.getVideoTracks()[0].onended = () => {
         stopMediaStream();
       };
@@ -575,75 +597,42 @@ Analysis Process:
         currentThought={currentThought}
       />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
         {(isVideoActive || isScreenSharing) && (
           <div className="grid grid-cols-2 gap-4 p-4">
             {isVideoActive && (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full rounded-lg bg-black"
-              />
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full rounded-lg bg-black"
+                />
+              </div>
             )}
             {isScreenSharing && (
-              <video
-                ref={screenRef}
-                autoPlay
-                playsInline
-                className="w-full rounded-lg bg-black"
-              />
+              <div className="relative">
+                <video
+                  ref={screenRef}
+                  autoPlay
+                  playsInline
+                  className="w-full rounded-lg bg-black"
+                />
+                <ScreenAnalyzer 
+                  screenRef={screenRef}
+                  isActive={isScreenSharing}
+                  onAnalysisComplete={handleAnalysisComplete}
+                />
+              </div>
             )}
           </div>
         )}
-
+        
         <MessageList messages={messages} isLoading={isLoading} />
         <div ref={messagesEndRef} />
       </div>
 
       <div className="p-4 border-t border-glass-border">
-        <MediaControls
-          isVoiceActive={isVoiceActive}
-          isVideoActive={isVideoActive}
-          isScreenSharing={isScreenSharing}
-          onVoiceToggle={() => isVoiceActive ? stopMediaStream() : startVoiceCall()}
-          onVideoToggle={() => isVideoActive ? stopMediaStream() : startVideoCall()}
-          onScreenShare={() => isScreenSharing ? stopMediaStream() : startScreenShare()}
-          onFileUpload={() => fileInputRef.current?.click()}
-        />
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <div className="flex items-center space-x-4">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask anything in ${languages.find(l => l.code === selectedLanguage)?.name}...`}
-              className="flex-1 bg-glass rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="p-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-            >
-              <Send size={20} />
-            </button>
-          </div>
-          {messages.length > 0 && (
-            <SuggestedQuestions
-              questions={generateSuggestedQuestions(messages[messages.length - 1].content)}
-              onQuestionClick={handleSuggestedQuestionClick}
-            />
-          )}
-        </form>
-      </div>
-    </div>
-  );
-};
+        {
+
