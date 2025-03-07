@@ -320,7 +320,7 @@ export const ProductCard = ({ title, description, imageUrl, price }) => {
       </CardHeader>
       <CardContent>
         <p className="text-gray-500">{description}</p>
-        <p className="mt-2 text-xl font-bold">${price}</p>
+        <p className="mt-2 text-xl font-bold">\${price}</p>
       </CardContent>
       <CardFooter>
         <Button className="w-full">Add to Cart</Button>
