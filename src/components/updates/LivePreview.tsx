@@ -53,6 +53,17 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
     return null;
   };
 
+  // Remove import statements from code to prevent errors
+  const processCodeForEvaluation = (codeString: string): string => {
+    // Remove all import statements
+    const codeWithoutImports = codeString.replace(/import.*?from\s+['"].*?['"];?/g, '');
+    
+    // Replace export statements with simple variable declarations
+    const codeWithoutExports = codeWithoutImports.replace(/export\s+(default\s+)?/g, '');
+    
+    return codeWithoutExports;
+  };
+
   // Simple component renderer
   const renderComponent = () => {
     if (!code || isLoading) return null;
@@ -65,20 +76,28 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       // Extract component name
       const componentName = extractComponentName(code);
       
+      // Process code to remove imports and exports
+      const processedCode = processCodeForEvaluation(code);
+      
       // Create a dynamic component from the code string
       const transformedCode = `
-        ${code}
-        return ${componentName || 'null'};
+        try {
+          ${processedCode}
+          return typeof ${componentName} !== 'undefined' ? ${componentName} : null;
+        } catch (error) {
+          console.error('Component evaluation error:', error);
+          return null;
+        }
       `;
       
       // Create a function that returns the component
-      // eslint-disable-next-line no-new-func
       let ComponentFunction;
       try {
-        ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', 'return ' + transformedCode);
-      } catch (error) {
-        // If there's an error, try an alternative approach
+        // eslint-disable-next-line no-new-func
         ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', transformedCode);
+      } catch (error) {
+        console.error("Error creating function:", error);
+        throw error;
       }
       
       // Create a mock require function to handle imports
@@ -124,9 +143,6 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
             User: IconComponent,
           };
         }
-        if (moduleName.startsWith('./') || moduleName.startsWith('../')) {
-          return {}; // Mock local imports
-        }
         return {}; // Return empty object for other imports
       };
       
@@ -135,85 +151,48 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = fals
       const mockExports = {};
       
       try {
-        // Try with component expression
-        const result = ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
+        // Execute the component function
+        const Component = ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
         
-        if (result && typeof result === 'function') {
-          // If the function returned a React component directly
-          const Component = result;
+        if (Component && typeof Component === 'function') {
           return (
             <ErrorBoundary>
               <Component />
             </ErrorBoundary>
           );
-        } else if (React.isValidElement(result)) {
-          // If it returned a React element directly
-          return result;
+        } else if (React.isValidElement(Component)) {
+          return Component;
+        } else {
+          // If the componentName is found but not returned correctly, try to create it manually
+          if (componentName) {
+            const fallbackCode = `
+              ${processedCode}
+              try {
+                const FallbackComponent = ${componentName};
+                return FallbackComponent ? React.createElement(FallbackComponent) : null;
+              } catch (e) {
+                console.error('Fallback error:', e);
+                return null;
+              }
+            `;
+            
+            try {
+              // eslint-disable-next-line no-new-func
+              const FallbackFunction = new Function('React', 'motion', fallbackCode);
+              return FallbackFunction(React, motion);
+            } catch (error) {
+              console.error("Fallback creation error:", error);
+            }
+          }
         }
       } catch (error) {
-        console.log("First approach failed, trying alternative:", error);
-      }
-      
-      // If that fails, try with the regular component definition approach
-      // Check if the component was exported
-      if (mockModule.exports) {
-        let Component = null;
-        
-        // Try to find the component in different export formats
-        if (typeof mockModule.exports === 'object') {
-          if (mockModule.exports.default) {
-            Component = mockModule.exports.default;
-          } else if (componentName && mockModule.exports[componentName]) {
-            Component = mockModule.exports[componentName];
-          } else if (Object.keys(mockModule.exports).length > 0) {
-            // Try the first exported component if multiple are exported
-            const firstKey = Object.keys(mockModule.exports)[0];
-            Component = mockModule.exports[firstKey];
-          }
-        } else if (typeof mockModule.exports === 'function') {
-          Component = mockModule.exports;
-        }
-        
-        if (Component) {
-          try {
-            return (
-              <ErrorBoundary>
-                <Component />
-              </ErrorBoundary>
-            );
-          } catch (error) {
-            console.error("Error rendering component:", error);
-            throw error;
-          }
-        }
-      }
-      
-      // Last resort for common component patterns
-      if (componentName) {
-        try {
-          // Create a wrapper component that tries to render the named component
-          const WrapperComponent = () => {
-            // eslint-disable-next-line no-new-func
-            const renderFunc = new Function('React', 'motion', 'require', `
-              ${code}
-              return React.createElement(${componentName});
-            `);
-            return renderFunc(React, motion, mockRequire);
-          };
-          
-          return (
-            <ErrorBoundary>
-              <WrapperComponent />
-            </ErrorBoundary>
-          );
-        } catch (error) {
-          console.error("Error with wrapper component:", error);
-        }
+        console.error("Component execution error:", error);
+        throw error;
       }
       
       return (
         <div className="text-yellow-500">
-          Could not render component. Make sure your code exports a React component either as default export or named export.
+          Could not render component. The component might have dependencies that cannot be mocked in the preview.
         </div>
       );
     } catch (error) {

@@ -1,22 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
-import { MagicalUniverseScene } from "@/components/MagicalUniverseScene";
 import { motion } from "framer-motion";
 import { 
   SendHorizontal, 
   Code, 
   Play, 
   Sparkles, 
-  Copy, 
-  Download, 
-  Zap,
-  RefreshCcw,
-  Settings,
-  Terminal,
-  FileCode,
-  Bug,
-  Mic,
-  Braces,
   Bot,
   Rocket
 } from "lucide-react";
@@ -28,6 +17,7 @@ import { VoiceCommandListener } from "@/components/updates/VoiceCommandListener"
 import { AIUpdateFeatureList } from "@/components/updates/AIUpdateFeatureList";
 import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 import { DevelopmentToolsPanel } from "@/components/updates/DevelopmentToolsPanel";
+import { DynamicUniverseBackground } from "@/components/DynamicUniverseBackground";
 
 // Performance optimizations
 const optimizeForPerformance = () => {
@@ -208,7 +198,7 @@ const Updates = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <MagicalUniverseScene />
+      <DynamicUniverseBackground />
       <Header />
       
       <main className="container mx-auto px-4 pt-24 pb-16">
