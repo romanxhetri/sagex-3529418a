@@ -8,7 +8,6 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import { AIQuickCommand } from "./components/AIQuickCommand";
 import { AIAutoUpdaterIntegration } from "./services/AIAutoUpdaterIntegration";
-import { DynamicUniverseBackground } from "./components/DynamicUniverseBackground";
 
 // Lazy loading components to improve initial load time
 const Chat = lazy(() => import("./pages/Chat"));
@@ -17,6 +16,7 @@ const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
+const MagicalUniverseScene = lazy(() => import("./components/MagicalUniverseScene").then(module => ({ default: module.MagicalUniverseScene })));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -37,14 +37,25 @@ const queryClient = new QueryClient({
   }
 });
 
-// Route component to manage app
+// Route component to manage scene rendering
 const AppRoutes = () => {
   const location = useLocation();
+  const [showScene, setShowScene] = useState(true);
+  
+  // Optimize scene rendering based on route
+  useEffect(() => {
+    // Don't show scene on routes that have their own 3D elements
+    const routesWithoutScene = ['/updates'];
+    setShowScene(!routesWithoutScene.includes(location.pathname));
+  }, [location]);
   
   return (
     <>
-      {/* 3D Background rendered globally for all routes */}
-      <DynamicUniverseBackground />
+      {showScene && (
+        <Suspense fallback={<div className="fixed inset-0 bg-gray-900" />}>
+          <MagicalUniverseScene />
+        </Suspense>
+      )}
       
       <AIQuickCommand />
       

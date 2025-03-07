@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { MagicalUniverseScene } from "@/components/MagicalUniverseScene";
 import { ChatInterface } from "@/components/ChatInterface";
 import { motion } from "framer-motion";
 import { Laptop, Smartphone, Sparkles, Download, Headphones } from "lucide-react";
@@ -28,7 +29,9 @@ const Chat = () => {
   }, []);
   
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      <MagicalUniverseScene />
+      <WeatherEffects weatherType={currentWeather} />
       <Header />
       
       <main className="container mx-auto px-4 pt-24">
