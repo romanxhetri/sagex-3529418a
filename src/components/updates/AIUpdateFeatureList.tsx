@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play, Trash } from "lucide-react";
+import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play, Trash, RefreshCcw } from "lucide-react";
 import { aiAutoUpdater, UpdateTask } from "@/services/AIAutoUpdater";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
