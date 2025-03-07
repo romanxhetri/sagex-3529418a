@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { CodeImplementor } from "@/utils/codeImplementor";
 
@@ -41,7 +42,7 @@ class AIAutoUpdater {
     this.isRunning = true;
     this.updateInterval = window.setInterval(() => {
       this.processTasks();
-    }, 10000); // Check for tasks every 10 seconds (faster than before)
+    }, 5000); // Check for tasks every 5 seconds (for better performance)
     
     console.log('AI Auto Updater service started');
     toast('AI Auto Updater is now monitoring your app');
@@ -88,7 +89,7 @@ class AIAutoUpdater {
     });
     
     // Start processing immediately for better user experience
-    setTimeout(() => this.processTasks(), 1000);
+    setTimeout(() => this.processTasks(), 500);
   }
 
   // Add a new task programmatically
@@ -166,10 +167,10 @@ class AIAutoUpdater {
     const generatedCode = this.generateSampleCode(taskToProcess);
     taskToProcess.code = generatedCode;
     
-    // Simulate AI processing the task
+    // Simulate AI processing the task (reduced times for faster performance)
     setTimeout(() => {
       // 95% chance of success (increased from 90%)
-      if (Math.random() < 0.95) {
+      if (Math.random() < 0.98) {
         taskToProcess.status = 'completed';
         taskToProcess.completedAt = new Date();
         
@@ -191,7 +192,7 @@ class AIAutoUpdater {
       
       this.saveTasks();
       this.notifyListeners();
-    }, 2000 + Math.random() * 3000); // Faster processing time (2-5 seconds)
+    }, 1000 + Math.random() * 1000); // Faster processing time (1-2 seconds)
   }
 
   // Implement the changes in a task
@@ -325,6 +326,30 @@ export const ProductCard = ({ title, description, imageUrl, price }) => {
         <Button className="w-full">Add to Cart</Button>
       </CardFooter>
     </Card>
+  );
+};`;
+    } else if (lowerDesc.includes('tutorial')) {
+      return `
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Info, ArrowRight } from "lucide-react";
+
+export const TutorialButton = () => {
+  const startTutorial = () => {
+    console.log("Tutorial started");
+    // Tutorial logic would go here
+    alert("Welcome to the tutorial! This will guide you through using the app.");
+  };
+
+  return (
+    <Button 
+      onClick={startTutorial}
+      className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 px-4 py-2 rounded-lg text-white font-medium shadow-lg transition-all duration-300 flex items-center"
+    >
+      <Info className="mr-2 h-4 w-4" />
+      Start Tutorial
+      <ArrowRight className="ml-2 h-4 w-4" />
+    </Button>
   );
 };`;
     } else {
