@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap, CheckCircle, XCircle, Clock, ArrowUpCircle, Code, Play } from "lucide-react";
@@ -6,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LivePreview } from "./LivePreview";
 import { CodeImplementor } from "@/utils/codeImplementor";
+import { AIAutoUpdaterIntegration } from "@/services/AIAutoUpdaterIntegration";
 
 export const AIUpdateFeatureList: React.FC = () => {
   const [tasks, setTasks] = useState<UpdateTask[]>([]);
   const [filter, setFilter] = useState<UpdateTask['status'] | 'all'>('all');
   const [selectedTask, setSelectedTask] = useState<UpdateTask | null>(null);
   const [autoImplementEnabled, setAutoImplementEnabled] = useState(true);
+  const [isImplementing, setIsImplementing] = useState(false);
 
   useEffect(() => {
     // Initial load
@@ -73,15 +76,34 @@ export const AIUpdateFeatureList: React.FC = () => {
       return;
     }
 
-    const success = await CodeImplementor.implementCode(task);
+    setIsImplementing(true);
     
-    if (success) {
-      const updatedTasks = tasks.map(t => 
-        t.id === task.id 
-          ? { ...t, status: 'completed' as const } 
-          : t
-      );
-      setTasks(updatedTasks);
+    try {
+      // Use the integration to implement the task
+      const success = await AIAutoUpdaterIntegration.implementTask(task.id);
+      
+      if (success) {
+        toast.success("Code implementation successful!", {
+          description: "The feature has been added to your app."
+        });
+        
+        // Update the task list
+        const updatedTasks = tasks.map(t => 
+          t.id === task.id 
+            ? { ...t, status: 'completed' as const } 
+            : t
+        );
+        setTasks(updatedTasks);
+      } else {
+        toast.error("Failed to implement code", {
+          description: "Check the console for more details."
+        });
+      }
+    } catch (error) {
+      console.error("Implementation error:", error);
+      toast.error("An error occurred during implementation");
+    } finally {
+      setIsImplementing(false);
     }
   };
 
@@ -192,15 +214,20 @@ export const AIUpdateFeatureList: React.FC = () => {
                         </button>
                       )}
                       
-                      {task.status === 'completed' && task.code && (
+                      {task.code && (
                         <button 
-                          className="text-xs bg-green-600 hover:bg-green-700 p-1 rounded text-white"
+                          className={`text-xs ${task.status === 'completed' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} p-1 rounded text-white`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleImplementCode(task);
                           }}
+                          disabled={isImplementing}
                         >
-                          <Play size={14} />
+                          {isImplementing ? (
+                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-white rounded-full" />
+                          ) : (
+                            <Play size={14} />
+                          )}
                         </button>
                       )}
                       
@@ -239,14 +266,24 @@ export const AIUpdateFeatureList: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-white">Generated Code</h3>
-                {selectedTask.status === 'completed' && (
+                {selectedTask.code && (
                   <Button 
                     size="sm"
                     onClick={() => handleImplementCode(selectedTask)}
                     className="flex items-center gap-1"
+                    disabled={isImplementing}
                   >
-                    <Play size={14} />
-                    Implement Now
+                    {isImplementing ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-white rounded-full mr-1" />
+                        Implementing...
+                      </>
+                    ) : (
+                      <>
+                        <Play size={14} />
+                        Implement Now
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

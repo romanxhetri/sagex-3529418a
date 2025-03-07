@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import { AIQuickCommand } from "./components/AIQuickCommand";
+import { AIAutoUpdaterIntegration } from "./services/AIAutoUpdaterIntegration";
 
 // Lazy loading components to improve initial load time
 const Chat = lazy(() => import("./pages/Chat"));
@@ -84,6 +85,9 @@ const App = () => {
     const timer = setTimeout(() => {
       setShowIntro(false);
     }, 5000); // Further reduced to 5 seconds for faster app experience
+
+    // Initialize the AIAutoUpdater integration
+    AIAutoUpdaterIntegration.initialize();
 
     return () => clearTimeout(timer);
   }, []);
