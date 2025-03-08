@@ -17,7 +17,6 @@ import { VoiceCommandListener } from "@/components/updates/VoiceCommandListener"
 import { AIUpdateFeatureList } from "@/components/updates/AIUpdateFeatureList";
 import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 import { DevelopmentToolsPanel } from "@/components/updates/DevelopmentToolsPanel";
-import { DynamicUniverseBackground } from "@/components/DynamicUniverseBackground";
 
 // Performance optimizations
 const optimizeForPerformance = () => {
@@ -197,8 +196,7 @@ const Updates = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      <DynamicUniverseBackground />
+    <div className="min-h-screen bg-transparent text-white overflow-hidden">
       <Header />
       
       <main className="container mx-auto px-4 pt-24 pb-16">
