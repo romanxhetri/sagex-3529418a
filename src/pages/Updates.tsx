@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
@@ -187,12 +188,48 @@ const Updates = () => {
     }
   };
 
+  const toggleAutoUpdate = () => {
+    if (autoUpdateEnabled) {
+      aiAutoUpdater.stop();
+      setAutoUpdateEnabled(false);
+      toast({
+        title: "Auto Updates Disabled",
+        description: "SageX AI will no longer automatically apply updates",
+      });
+    } else {
+      aiAutoUpdater.start();
+      setAutoUpdateEnabled(true);
+      toast({
+        title: "Auto Updates Enabled",
+        description: "SageX AI will now automatically apply updates",
+      });
+    }
+  };
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(generatedCode);
     toast({
       title: "Copied!",
       description: "Code copied to clipboard",
     });
+  };
+
+  const handleVoiceCommand = (command: string) => {
+    console.log("Voice command received:", command);
+    
+    // Handle different commands (simplified for better performance)
+    if (command.includes("generate") || command.includes("create")) {
+      // Extract what to generate
+      const featureMatch = command.match(/generate (.*?)( for| to| with|$)/i);
+      if (featureMatch) {
+        const feature = featureMatch[1];
+        setPrompt(`Create a ${feature} component or feature for the SageX app`);
+        setTimeout(() => handleGenerate(), 300);
+      }
+    } else {
+      // Use the command as a prompt
+      setPrompt(command);
+    }
   };
 
   return (

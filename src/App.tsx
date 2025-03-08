@@ -43,7 +43,6 @@ const AppRoutes = () => {
   
   return (
     <>
-      <DynamicUniverseBackground />
       <AIQuickCommand />
       
       <Suspense fallback={<LoadingFallback />}>
@@ -82,6 +81,9 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        {/* Add DynamicUniverseBackground once, at the app root level */}
+        <DynamicUniverseBackground />
+        
         <Toaster />
         <Sonner />
         
