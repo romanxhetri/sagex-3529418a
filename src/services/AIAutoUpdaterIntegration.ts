@@ -60,15 +60,16 @@ export class AIAutoUpdaterIntegration {
     this.isInitialized = true;
     console.log('[AIAutoUpdaterIntegration] Initialized');
     
-    // Start the AIAutoUpdater
-    setTimeout(() => {
-      try {
-        aiAutoUpdater.start();
-        console.log('[AIAutoUpdaterIntegration] AIAutoUpdater started');
-      } catch (error) {
-        console.error('[AIAutoUpdaterIntegration] Error starting AIAutoUpdater:', error);
-      }
-    }, 500);
+    // Start the AIAutoUpdater immediately
+    try {
+      aiAutoUpdater.start();
+      console.log('[AIAutoUpdaterIntegration] AIAutoUpdater started');
+      toast.success("AI Auto Updater", {
+        description: "SageX AI is now monitoring and implementing updates"
+      });
+    } catch (error) {
+      console.error('[AIAutoUpdaterIntegration] Error starting AIAutoUpdater:', error);
+    }
   }
 
   /**
