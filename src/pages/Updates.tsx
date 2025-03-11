@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
@@ -7,7 +8,9 @@ import {
   Play, 
   Sparkles, 
   Bot,
-  Rocket
+  Rocket,
+  Shield,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CodeEditor } from "@/components/updates/CodeEditor";
@@ -17,32 +20,14 @@ import { VoiceCommandListener } from "@/components/updates/VoiceCommandListener"
 import { AIUpdateFeatureList } from "@/components/updates/AIUpdateFeatureList";
 import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 import { DevelopmentToolsPanel } from "@/components/updates/DevelopmentToolsPanel";
-import { DynamicUniverseBackground } from "@/components/DynamicUniverseBackground";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
-// Performance optimizations
-const optimizeForPerformance = () => {
-  // Reduce animation complexity
-  document.documentElement.style.setProperty('--animate-duration', '0.3s');
-  
-  // Limit non-essential animations
-  const animationReducer = () => {
-    const animatedElements = document.querySelectorAll('.animate-pulse');
-    if (animatedElements.length > 10) {
-      // Keep only the first 10 animated elements
-      for (let i = 10; i < animatedElements.length; i++) {
-        animatedElements[i].classList.remove('animate-pulse');
-      }
-    }
-  };
-  
-  // Run animation optimizer every 2 seconds
-  setInterval(animationReducer, 2000);
-  
-  // Optimize rendering
-  return true;
-};
+interface UpdatesProps {
+  adminPassword?: string | null;
+}
 
-const Updates = () => {
+const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
   const [prompt, setPrompt] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -54,39 +39,63 @@ const Updates = () => {
   const [generatedReasoning, setGeneratedReasoning] = useState("");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [isOptimized, setIsOptimized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
   const { toast } = useToast();
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
 
-  // Run performance optimizations on load
+  // Performance optimizations
   useEffect(() => {
     if (!isOptimized) {
-      optimizeForPerformance();
+      // Optimize for high performance (targeting 200+ FPS)
+      document.documentElement.style.setProperty('--animate-duration', '0.2s');
+      
+      // Limit animations for better performance
+      const animationReducer = () => {
+        const animatedElements = document.querySelectorAll('.animate-pulse');
+        if (animatedElements.length > 5) {
+          for (let i = 5; i < animatedElements.length; i++) {
+            animatedElements[i].classList.remove('animate-pulse');
+          }
+        }
+      };
+      
+      // Run optimization less frequently
+      setInterval(animationReducer, 3000);
+      
       setIsOptimized(true);
     }
     
-    // Check for pending update requests from the command interface
+    // Check for pending update requests
     const pendingRequest = localStorage.getItem("pendingUpdateRequest");
     if (pendingRequest) {
       setPrompt(pendingRequest);
       localStorage.removeItem("pendingUpdateRequest");
-      
-      // Auto-generate if it's from the command interface
-      setTimeout(() => {
-        if (promptInputRef.current) {
-          promptInputRef.current.focus();
-          handleGenerate();
-        }
-      }, 500); // Reduced from 1000ms to improve speed
     }
   }, []);
 
+  // Handle authentication
+  useEffect(() => {
+    // Check if we have an admin password
+    if (!adminPassword) {
+      toast({
+        title: "Error",
+        description: "Admin access not configured. Please contact the administrator.",
+        variant: "destructive"
+      });
+      navigate("/");
+      return;
+    }
+  }, [adminPassword, navigate]);
+
   // Handle voice commands
   const handleVoiceCommand = (command: string) => {
+    if (!isAuthenticated) return;
+    
     console.log("Voice command received:", command);
     
-    // Handle different commands (simplified for better performance)
     if (command.includes("generate") || command.includes("create")) {
-      // Extract what to generate
       const featureMatch = command.match(/generate (.*?)( for| to| with|$)/i);
       if (featureMatch) {
         const feature = featureMatch[1];
@@ -94,12 +103,13 @@ const Updates = () => {
         setTimeout(() => handleGenerate(), 300);
       }
     } else {
-      // Use the command as a prompt
       setPrompt(command);
     }
   };
 
   const toggleAutoUpdate = () => {
+    if (!isAuthenticated) return;
+    
     if (autoUpdateEnabled) {
       aiAutoUpdater.stop();
       setAutoUpdateEnabled(false);
@@ -118,6 +128,8 @@ const Updates = () => {
   };
 
   const handleGenerate = async () => {
+    if (!isAuthenticated) return;
+    
     if (!prompt.trim()) {
       toast({
         title: "Empty prompt",
@@ -133,7 +145,7 @@ const Updates = () => {
     setIsReasoningMinimized(false);
     
     try {
-      // Generate reasoning process first (simplified for speed)
+      // Generate reasoning process
       const reasoning = `## SageX AI Reasoning Process
 
 ### 1. 🧠 Understanding the Request
@@ -154,7 +166,7 @@ const Updates = () => {
       setGeneratedReasoning(reasoning);
       setCurrentThought(reasoning);
       
-      // Generate code based on the prompt (faster implementation)
+      // Generate code
       let sampleCode = aiAutoUpdater.generateFeatureCode(prompt);
       setGeneratedCode(sampleCode);
       setIsGenerating(false);
@@ -165,7 +177,7 @@ const Updates = () => {
         description: "Your code has been generated successfully!",
       });
 
-      // Add to auto updater for actual implementation
+      // Add to auto updater
       aiAutoUpdater.addTask(prompt, "feature", "high", sampleCode);
       
       // Process immediately
@@ -175,7 +187,7 @@ const Updates = () => {
         if (pendingTask) {
           aiAutoUpdater.addCodeToTask(pendingTask.id, sampleCode);
         }
-      }, 500);
+      }, 300);
       
     } catch (error) {
       console.error("Error:", error);
@@ -184,11 +196,14 @@ const Updates = () => {
         description: "Failed to generate code. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsGenerating(false);
     }
   };
 
   const handleCopyCode = () => {
+    if (!isAuthenticated) return;
+    
     navigator.clipboard.writeText(generatedCode);
     toast({
       title: "Copied!",
@@ -196,16 +211,92 @@ const Updates = () => {
     });
   };
 
+  const handleAuthenticate = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordInput === adminPassword) {
+      setIsAuthenticated(true);
+      toast({
+        title: "Access Granted",
+        description: "Welcome to the admin interface!",
+      });
+      
+      // Auto-generate if there's a pending request
+      if (prompt && promptInputRef.current) {
+        setTimeout(() => {
+          handleGenerate();
+        }, 500);
+      }
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "Incorrect password.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black text-white overflow-hidden">
+        <Header />
+        
+        <main className="container mx-auto px-4 pt-24 pb-16 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-md w-full bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden p-6"
+          >
+            <div className="text-center mb-6">
+              <Shield className="w-16 h-16 mx-auto text-purple-500 mb-4" />
+              <h2 className="text-2xl font-bold text-white">Admin Access Required</h2>
+              <p className="text-gray-400 mt-2">
+                Please enter your admin password to access the AI update system.
+              </p>
+            </div>
+            
+            <form onSubmit={handleAuthenticate}>
+              <div className="mb-4">
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Enter admin password"
+                  className="w-full p-3 bg-black/30 border border-glass-border rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  autoFocus
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                Authenticate
+              </Button>
+              
+              <div className="flex items-center justify-center mt-4">
+                <AlertTriangle className="w-4 h-4 text-yellow-500 mr-2" />
+                <p className="text-sm text-gray-400">
+                  Authorized personnel only
+                </p>
+              </div>
+            </form>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <DynamicUniverseBackground />
       <Header />
       
       <main className="container mx-auto px-4 pt-24 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }} // Reduced from 0.5 for faster rendering
+          transition={{ duration: 0.3 }}
           className="max-w-7xl mx-auto bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden"
         >
           <div className="p-4 border-b border-glass-border flex items-center justify-between">

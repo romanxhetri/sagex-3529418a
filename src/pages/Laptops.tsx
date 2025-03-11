@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
-import { MagicalUniverseScene } from "@/components/MagicalUniverseScene";
 import { LaptopChat } from "@/components/laptop/LaptopChat";
 import { LaptopList } from "@/components/laptop/LaptopList";
 import { Laptop } from "@/types/chat";
 import { motion } from "framer-motion";
-import { Sparkles, Laptop as LaptopIcon } from "lucide-react";
+import { Sparkles, Laptop as LaptopIcon, Plus, X, Upload, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
-const laptopData: Laptop[] = [
+const initialLaptopData: Laptop[] = [
   {
     id: "1",
     name: "XPS 15",
@@ -165,14 +166,93 @@ const laptopData: Laptop[] = [
 
 const Laptops = () => {
   const [filterQuery, setFilterQuery] = useState<string>("");
+  const [laptops, setLaptops] = useState<Laptop[]>(initialLaptopData);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLaptop, setNewLaptop] = useState<Partial<Laptop>>({
+    id: "",
+    name: "",
+    brand: "",
+    price: 0,
+    imageUrl: "",
+    processor: "",
+    ram: "",
+    storage: "",
+    display: "",
+    graphics: "",
+    batteryLife: "",
+    weight: "",
+    os: "",
+    category: "creative",
+    rating: 4.0
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleRecommendation = (query: string) => {
     setFilterQuery(query);
   };
 
+  const handleAddLaptop = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const id = Date.now().toString();
+    const newLaptopData: Laptop = {
+      ...newLaptop as Laptop,
+      id
+    };
+    
+    setLaptops([newLaptopData, ...laptops]);
+    
+    setNewLaptop({
+      id: "",
+      name: "",
+      brand: "",
+      price: 0,
+      imageUrl: "",
+      processor: "",
+      ram: "",
+      storage: "",
+      display: "",
+      graphics: "",
+      batteryLife: "",
+      weight: "",
+      os: "",
+      category: "creative",
+      rating: 4.0
+    });
+    setImagePreview(null);
+    setShowAddForm(false);
+    
+    toast({
+      title: "Laptop Posted",
+      description: "Your laptop has been successfully posted for sale!",
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    setNewLaptop(prev => ({
+      ...prev,
+      [name]: name === "price" ? parseFloat(value) : value
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const imageUrl = URL.createObjectURL(file);
+    setImagePreview(imageUrl);
+    
+    setNewLaptop(prev => ({
+      ...prev,
+      imageUrl
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <MagicalUniverseScene />
       <Header />
       
       <main className="container mx-auto px-4 pt-24">
@@ -182,20 +262,274 @@ const Laptops = () => {
           transition={{ duration: 0.5 }}
           className="max-w-6xl mx-auto"
         >
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-2 flex items-center">
-              <Sparkles className="mr-2 text-purple-400" />
-              Premium Laptops 💻✨
-              <Sparkles className="ml-2 text-pink-400" />
-            </h1>
-            <p className="text-gray-300">
-              Find the perfect laptop for your needs with our AI assistant! Tell us what you're looking for, and we'll recommend the best options. Your perfect tech companion awaits! 🚀
-            </p>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-2 flex items-center">
+                <Sparkles className="mr-2 text-purple-400" />
+                Premium Laptops 💻✨
+                <Sparkles className="ml-2 text-pink-400" />
+              </h1>
+              <p className="text-gray-300">
+                Find the perfect laptop for your needs with our AI assistant! Tell us what you're looking for, and we'll recommend the best options. Your perfect tech companion awaits! 🚀
+              </p>
+            </div>
+            
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+              onClick={() => setShowAddForm(true)}
+            >
+              <Plus size={16} />
+              Post a Laptop
+            </Button>
           </div>
+          
+          {showAddForm && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-center p-4 border-b border-glass-border">
+                  <h2 className="text-xl font-semibold">Post a Laptop for Sale</h2>
+                  <button 
+                    onClick={() => setShowAddForm(false)}
+                    className="p-1 hover:bg-gray-800 rounded-full"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleAddLaptop} className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Laptop Name</label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={newLaptop.name}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="MacBook Pro 16"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Brand</label>
+                        <input
+                          type="text"
+                          name="brand"
+                          value={newLaptop.brand}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Apple"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Price ($)</label>
+                        <input
+                          type="number"
+                          name="price"
+                          value={newLaptop.price || ""}
+                          onChange={handleInputChange}
+                          required
+                          min={0}
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="1999"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Category</label>
+                        <select
+                          name="category"
+                          value={newLaptop.category}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="creative">Creative</option>
+                          <option value="gaming">Gaming</option>
+                          <option value="business">Business</option>
+                          <option value="student">Student</option>
+                          <option value="budget">Budget</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Image</label>
+                        <div className="mt-1 flex items-center">
+                          <label className="flex items-center justify-center p-2 bg-gray-800/50 border border-gray-700 rounded-md text-white hover:bg-gray-700/50 transition-colors cursor-pointer flex-1">
+                            <Upload size={16} className="mr-2" />
+                            {imagePreview ? 'Change Image' : 'Upload Image'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                        
+                        {imagePreview && (
+                          <div className="mt-2 relative rounded-md overflow-hidden h-32">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImagePreview(null);
+                                setNewLaptop(prev => ({ ...prev, imageUrl: "" }));
+                              }}
+                              className="absolute top-2 right-2 p-1 bg-red-500 rounded-full"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Processor</label>
+                        <input
+                          type="text"
+                          name="processor"
+                          value={newLaptop.processor}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Intel Core i9-12900H"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">RAM</label>
+                        <input
+                          type="text"
+                          name="ram"
+                          value={newLaptop.ram}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="32GB DDR5"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Storage</label>
+                        <input
+                          type="text"
+                          name="storage"
+                          value={newLaptop.storage}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="1TB SSD"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Display</label>
+                        <input
+                          type="text"
+                          name="display"
+                          value={newLaptop.display}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="16-inch Liquid Retina XDR"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Graphics</label>
+                        <input
+                          type="text"
+                          name="graphics"
+                          value={newLaptop.graphics}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="NVIDIA RTX 3080"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300">Battery Life</label>
+                          <input
+                            type="text"
+                            name="batteryLife"
+                            value={newLaptop.batteryLife}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Up to 10 hours"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300">Weight</label>
+                          <input
+                            type="text"
+                            name="weight"
+                            value={newLaptop.weight}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="1.8 kg"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300">Operating System</label>
+                        <input
+                          type="text"
+                          name="os"
+                          value={newLaptop.os}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-2 mt-1 bg-gray-800/50 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Windows 11 Pro"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setShowAddForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    >
+                      <Check size={16} className="mr-2" />
+                      Post Laptop
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2">
-              <LaptopList laptops={laptopData} filter={filterQuery} />
+              <LaptopList laptops={laptops} filter={filterQuery} />
             </div>
             
             <div className="lg:col-span-1">

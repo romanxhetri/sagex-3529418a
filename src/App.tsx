@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 import Index from "./pages/Index";
-import { AIQuickCommand } from "./components/AIQuickCommand";
 import { AIAutoUpdaterIntegration } from "./services/AIAutoUpdaterIntegration";
+import { UniverseBackground } from "./components/UniverseBackground";
 
 // Lazy loading components to improve initial load time
 const Chat = lazy(() => import("./pages/Chat"));
@@ -16,7 +16,6 @@ const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
-const MagicalUniverseScene = lazy(() => import("./components/MagicalUniverseScene").then(module => ({ default: module.MagicalUniverseScene })));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -31,8 +30,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       retry: 2,
-      refetchOnWindowFocus: false, // Disable refetching on window focus for better performance
-      gcTime: 10 * 60 * 1000 // 10 minutes cache time (renamed from cacheTime)
+      refetchOnWindowFocus: false,
+      gcTime: 10 * 60 * 1000
     }
   }
 });
@@ -40,32 +39,51 @@ const queryClient = new QueryClient({
 // Route component to manage scene rendering
 const AppRoutes = () => {
   const location = useLocation();
-  const [showScene, setShowScene] = useState(true);
-  
-  // Optimize scene rendering based on route
+  const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind">("thunder");
+  const [adminPassword, setAdminPassword] = useState<string | null>(null);
+
+  // Set up admin password
   useEffect(() => {
-    // Don't show scene on routes that have their own 3D elements
-    const routesWithoutScene = ['/updates'];
-    setShowScene(!routesWithoutScene.includes(location.pathname));
-  }, [location]);
+    // Set a default admin password or load from storage
+    const savedPassword = localStorage.getItem("adminPassword");
+    if (!savedPassword) {
+      const defaultPassword = "admin123"; // You can change this
+      localStorage.setItem("adminPassword", defaultPassword);
+      setAdminPassword(defaultPassword);
+    } else {
+      setAdminPassword(savedPassword);
+    }
+  }, []);
+  
+  // Cycle through weather effects every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWeather(prev => {
+        switch (prev) {
+          case "thunder": return "rain";
+          case "rain": return "fire";
+          case "fire": return "wind";
+          case "wind": return "thunder";
+          default: return "thunder";
+        }
+      });
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   return (
     <>
-      {showScene && (
-        <Suspense fallback={<div className="fixed inset-0 bg-gray-900" />}>
-          <MagicalUniverseScene />
-        </Suspense>
-      )}
-      
-      <AIQuickCommand />
+      {/* Global 3D background with weather effects */}
+      <UniverseBackground weatherType={currentWeather} />
       
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Index adminPassword={adminPassword} />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/laptops" element={<Laptops />} />
           <Route path="/mobiles" element={<Mobiles />} />
-          <Route path="/updates" element={<Updates />} />
+          <Route path="/updates" element={<Updates adminPassword={adminPassword} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -84,7 +102,7 @@ const App = () => {
     // Hide intro after a shorter time for better performance
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 5000); // Further reduced to 5 seconds for faster app experience
+    }, 5000);
 
     // Initialize the AIAutoUpdater integration
     AIAutoUpdaterIntegration.initialize();

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { UpdateTask } from "@/services/AIAutoUpdater";
 
 interface TaskListFiltersProps {
@@ -27,7 +27,7 @@ export const TaskListFilters: React.FC<TaskListFiltersProps> = ({
         onClick={onRefresh}
         className="text-xs"
       >
-        <RefreshCcw size={14} className="mr-1" />
+        <RefreshCw size={14} className="mr-1" />
         Refresh
       </Button>
       

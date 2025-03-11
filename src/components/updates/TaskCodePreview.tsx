@@ -67,7 +67,7 @@ export const TaskCodePreview: React.FC<TaskCodePreviewProps> = ({
       <div>
         <h4 className="text-md font-semibold text-white mb-2">Preview</h4>
         <div className="h-[200px] bg-gray-900 rounded-lg overflow-hidden">
-          <LivePreview code={task.code} />
+          <LivePreview code={task.code} isLoading={false} />
         </div>
       </div>
     </div>
