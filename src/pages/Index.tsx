@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -7,6 +7,8 @@ import { ArrowRight, Zap, Bot, Laptop, Smartphone, Sparkles, Send } from "lucide
 import { Button } from "@/components/ui/button";
 import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 import { useToast } from "@/hooks/use-toast";
+import { ChatInterface } from "@/components/ChatInterface";
+import { AnimatedCharacter } from "@/components/AnimatedCharacter";
 
 // Try to dynamically import the TutorialButton if it exists
 const DynamicComponentRenderer = ({ componentName, fallback = null }) => {
@@ -45,6 +47,8 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showCommandChat, setShowCommandChat] = useState(false);
+  const miniChatRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
   const handleAiCommand = async (e: React.FormEvent) => {
@@ -129,6 +133,10 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
       }
     }
   };
+
+  const toggleCommandChat = () => {
+    setShowCommandChat(!showCommandChat);
+  };
   
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
@@ -157,6 +165,16 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
           >
             The next generation AI-powered app that evolves with your needs
           </motion.p>
+          
+          {/* 3D Anime Character */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mb-8 relative h-64 md:h-72 lg:h-80"
+          >
+            <AnimatedCharacter />
+          </motion.div>
           
           {/* AI Command Chat Box */}
           <motion.div
@@ -189,6 +207,23 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
             <p className="text-sm text-gray-400 mt-2">
               Try: "Find a laptop for video editing" or "Show me flagship phones"
             </p>
+          </motion.div>
+          
+          {/* Mini Chat Interface */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="mb-12 max-w-4xl mx-auto"
+          >
+            <div ref={miniChatRef} className="relative">
+              <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                Chat with SageX AI
+              </h2>
+              <div className="h-[500px] overflow-hidden rounded-lg">
+                <ChatInterface />
+              </div>
+            </div>
           </motion.div>
           
           {/* Password Modal */}
@@ -232,33 +267,21 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
               </div>
             </motion.div>
           )}
-          
-          {/* Dynamic components section */}
-          <motion.div 
-            className="mt-10 flex flex-wrap justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-          >
-            <DynamicComponentRenderer 
-              componentName="TutorialButton" 
-              fallback={null}
-            />
-          </motion.div>
         </motion.div>
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"
         >
           <Link to="/laptops">
             <motion.div 
-              whileHover={{ scale: 1.05, rotate: 1 }}
+              whileHover={{ scale: 1.05, rotate: 1, z: 10 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-purple-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-purple-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Laptop className="text-purple-400 mb-4" size={32} />
               <h3 className="text-xl font-semibold mb-2">Laptop Finder</h3>
               <p className="text-gray-400">Find the perfect laptop with AI-powered recommendations</p>
@@ -267,25 +290,27 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
           
           <Link to="/mobiles">
             <motion.div 
-              whileHover={{ scale: 1.05, rotate: -1 }}
+              whileHover={{ scale: 1.05, rotate: -1, z: 10 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-blue-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(96,165,250,0.3)]"
+              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-blue-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(96,165,250,0.3)] relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-cyan-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Smartphone className="text-blue-400 mb-4" size={32} />
               <h3 className="text-xl font-semibold mb-2">Mobile Expert</h3>
               <p className="text-gray-400">Discover the best smartphones with AI assistance</p>
             </motion.div>
           </Link>
           
-          <Link to="/chat">
+          <Link to="/search">
             <motion.div 
-              whileHover={{ scale: 1.05, rotate: 1 }}
+              whileHover={{ scale: 1.05, rotate: 1, z: 10 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-green-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(74,222,128,0.3)]"
+              className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-green-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(74,222,128,0.3)] relative overflow-hidden group"
             >
-              <Bot className="text-green-400 mb-4" size={32} />
-              <h3 className="text-xl font-semibold mb-2">AI Assistant</h3>
-              <p className="text-gray-400">Get personalized help with your tech questions</p>
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <Search className="text-green-400 mb-4" size={32} />
+              <h3 className="text-xl font-semibold mb-2">AI Search</h3>
+              <p className="text-gray-400">Search the web with Perplexity-powered AI research</p>
             </motion.div>
           </Link>
         </motion.div>

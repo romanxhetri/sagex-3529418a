@@ -6,14 +6,14 @@ import {
   Box, 
   Brain, 
   Calculator, 
-  Facebook, 
   Gamepad, 
   Image, 
   Laptop, 
   MessageCircle, 
   Search, 
   Video,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
 
 interface NavItem {
@@ -29,14 +29,12 @@ export const Nav2D = () => {
     { id: 'resources', title: 'Resources', icon: <Book className="w-6 h-6" />, path: '/resources' },
     { id: 'pricing', title: 'Pricing', icon: <Calculator className="w-6 h-6" />, path: '/pricing' },
     { id: 'blog', title: 'Blog', icon: <Brain className="w-6 h-6" />, path: '/blog' },
-    { id: 'facebook', title: 'Facebook', icon: <Facebook className="w-6 h-6" />, path: '/facebook' },
-    { id: 'chatgpt', title: 'ChatGPT', icon: <MessageCircle className="w-6 h-6" />, path: '/chat' },
-    { id: 'laptops', title: 'Laptops', icon: <Laptop className="w-6 h-6" />, path: '/laptops' },
     { id: 'ai-search', title: 'AI Search', icon: <Search className="w-6 h-6" />, path: '/search' },
+    { id: 'laptops', title: 'Laptops', icon: <Laptop className="w-6 h-6" />, path: '/laptops' },
     { id: 'games', title: 'Games', icon: <Gamepad className="w-6 h-6" />, path: '/games' },
     { id: 'media', title: 'Media Creation', icon: <Image className="w-6 h-6" />, path: '/media' },
     { id: 'video', title: 'Video Editor', icon: <Video className="w-6 h-6" />, path: '/video' },
-    { id: 'updates', title: 'Update', icon: <Zap className="w-6 h-6" />, path: '/updates' },
+    { id: 'updates', title: 'AI Updates', icon: <Zap className="w-6 h-6" />, path: '/updates' },
   ];
 
   return (
