@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
@@ -53,13 +54,8 @@ const Updates = () => {
   const [generatedReasoning, setGeneratedReasoning] = useState("");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [isOptimized, setIsOptimized] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const { toast } = useToast();
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
-  
-  // Admin password check - Keep this feature secret
-  const correctPassword = "sagex2025admin";
 
   // Run performance optimizations on load
   useEffect(() => {
@@ -67,10 +63,6 @@ const Updates = () => {
       optimizeForPerformance();
       setIsOptimized(true);
     }
-    
-    // Check if admin is already authenticated in this session
-    const isAuthenticated = sessionStorage.getItem("adminAuthenticated") === "true";
-    setIsAdminAuthenticated(isAuthenticated);
     
     // Check for pending update requests from the command interface
     const pendingRequest = localStorage.getItem("pendingUpdateRequest");
@@ -196,6 +188,24 @@ const Updates = () => {
     }
   };
 
+  const toggleAutoUpdate = () => {
+    if (autoUpdateEnabled) {
+      aiAutoUpdater.stop();
+      setAutoUpdateEnabled(false);
+      toast({
+        title: "Auto Updates Disabled",
+        description: "SageX AI will no longer automatically apply updates",
+      });
+    } else {
+      aiAutoUpdater.start();
+      setAutoUpdateEnabled(true);
+      toast({
+        title: "Auto Updates Enabled",
+        description: "SageX AI will now automatically apply updates",
+      });
+    }
+  };
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(generatedCode);
     toast({
@@ -204,63 +214,23 @@ const Updates = () => {
     });
   };
 
-  // Admin authentication
-  const handleAdminAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPassword === correctPassword) {
-      setIsAdminAuthenticated(true);
-      sessionStorage.setItem("adminAuthenticated", "true");
-      toast({
-        title: "Authentication Successful",
-        description: "Welcome, Admin. Update features unlocked."
-      });
+  const handleVoiceCommand = (command: string) => {
+    console.log("Voice command received:", command);
+    
+    // Handle different commands (simplified for better performance)
+    if (command.includes("generate") || command.includes("create")) {
+      // Extract what to generate
+      const featureMatch = command.match(/generate (.*?)( for| to| with|$)/i);
+      if (featureMatch) {
+        const feature = featureMatch[1];
+        setPrompt(`Create a ${feature} component or feature for the SageX app`);
+        setTimeout(() => handleGenerate(), 300);
+      }
     } else {
-      toast({
-        title: "Authentication Failed",
-        description: "Incorrect password. Access denied.",
-        variant: "destructive"
-      });
+      // Use the command as a prompt
+      setPrompt(command);
     }
   };
-
-  if (!isAdminAuthenticated) {
-    return (
-      <div className="min-h-screen bg-transparent text-white overflow-hidden">
-        <Header />
-        <main className="container mx-auto px-4 pt-24 pb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-md mx-auto bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden"
-          >
-            <div className="p-4 border-b border-glass-border">
-              <h2 className="text-xl font-semibold text-white flex items-center">
-                <Bot className="text-purple-400 mr-2" size={20} />
-                SageX AI Access Control
-              </h2>
-            </div>
-            <form onSubmit={handleAdminAuth} className="p-6">
-              <p className="text-gray-300 mb-4">This section requires administrator access.</p>
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="Enter admin password"
-                className="w-full bg-glass rounded-lg px-3 py-2 text-white placeholder-gray-400 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <button
-                type="submit"
-                className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              >
-                Authenticate
-              </button>
-            </form>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden">
