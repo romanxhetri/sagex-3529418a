@@ -14,6 +14,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Laptops = lazy(() => import("./pages/Laptops"));
 const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
+const Search = lazy(() => import("./pages/Search"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
 
@@ -40,14 +41,14 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   const location = useLocation();
   const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind">("thunder");
-  const [adminPassword, setAdminPassword] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState<string | null>("6947");
 
   // Set up admin password
   useEffect(() => {
     // Set a default admin password or load from storage
     const savedPassword = localStorage.getItem("adminPassword");
     if (!savedPassword) {
-      const defaultPassword = "admin123"; // You can change this
+      const defaultPassword = "6947"; // Default password
       localStorage.setItem("adminPassword", defaultPassword);
       setAdminPassword(defaultPassword);
     } else {
@@ -84,6 +85,7 @@ const AppRoutes = () => {
           <Route path="/laptops" element={<Laptops />} />
           <Route path="/mobiles" element={<Mobiles />} />
           <Route path="/updates" element={<Updates adminPassword={adminPassword} />} />
+          <Route path="/search" element={<Search />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -102,7 +104,7 @@ const App = () => {
     // Hide intro after a shorter time for better performance
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 5000);
+    }, 3000); // Reduced from 5000 for better performance
 
     // Initialize the AIAutoUpdater integration
     AIAutoUpdaterIntegration.initialize();

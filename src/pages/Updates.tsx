@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
@@ -27,7 +26,7 @@ interface UpdatesProps {
   adminPassword?: string | null;
 }
 
-const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
+const Updates: React.FC<UpdatesProps> = ({ adminPassword = "6947" }) => {
   const [prompt, setPrompt] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,13 +44,10 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
 
-  // Performance optimizations
   useEffect(() => {
     if (!isOptimized) {
-      // Optimize for high performance (targeting 200+ FPS)
       document.documentElement.style.setProperty('--animate-duration', '0.2s');
       
-      // Limit animations for better performance
       const animationReducer = () => {
         const animatedElements = document.querySelectorAll('.animate-pulse');
         if (animatedElements.length > 5) {
@@ -61,13 +57,11 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
         }
       };
       
-      // Run optimization less frequently
       setInterval(animationReducer, 3000);
       
       setIsOptimized(true);
     }
     
-    // Check for pending update requests
     const pendingRequest = localStorage.getItem("pendingUpdateRequest");
     if (pendingRequest) {
       setPrompt(pendingRequest);
@@ -75,9 +69,7 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
     }
   }, []);
 
-  // Handle authentication
   useEffect(() => {
-    // Check if we have an admin password
     if (!adminPassword) {
       toast({
         title: "Error",
@@ -89,7 +81,6 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
     }
   }, [adminPassword, navigate]);
 
-  // Handle voice commands
   const handleVoiceCommand = (command: string) => {
     if (!isAuthenticated) return;
     
@@ -145,7 +136,6 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
     setIsReasoningMinimized(false);
     
     try {
-      // Generate reasoning process
       const reasoning = `## SageX AI Reasoning Process
 
 ### 1. 🧠 Understanding the Request
@@ -166,7 +156,6 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
       setGeneratedReasoning(reasoning);
       setCurrentThought(reasoning);
       
-      // Generate code
       let sampleCode = aiAutoUpdater.generateFeatureCode(prompt);
       setGeneratedCode(sampleCode);
       setIsGenerating(false);
@@ -177,10 +166,8 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
         description: "Your code has been generated successfully!",
       });
 
-      // Add to auto updater
       aiAutoUpdater.addTask(prompt, "feature", "high", sampleCode);
       
-      // Process immediately
       setTimeout(() => {
         const tasks = aiAutoUpdater.getTasks();
         const pendingTask = tasks.find(t => t.description === prompt && t.status === 'pending');
@@ -221,7 +208,6 @@ const Updates: React.FC<UpdatesProps> = ({ adminPassword }) => {
         description: "Welcome to the admin interface!",
       });
       
-      // Auto-generate if there's a pending request
       if (prompt && promptInputRef.current) {
         setTimeout(() => {
           handleGenerate();

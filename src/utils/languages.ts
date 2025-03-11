@@ -1,19 +1,16 @@
-
-import { LanguageOption } from "@/types/chat";
-
-export const languages: LanguageOption[] = [
-  { code: "en", name: "English", nativeName: "English" },
-  { code: "ne", name: "Nepali", nativeName: "नेपाली" },
-  { code: "hi", name: "Hindi", nativeName: "हिंदी" },
-  { code: "es", name: "Spanish", nativeName: "Español" },
-  { code: "fr", name: "French", nativeName: "Français" },
-  { code: "de", name: "German", nativeName: "Deutsch" },
-  { code: "ja", name: "Japanese", nativeName: "日本語" },
-  { code: "ko", name: "Korean", nativeName: "한국어" },
-  { code: "zh", name: "Chinese", nativeName: "中文" }
+export const languages = [
+  { code: "en", name: "English" },
+  { code: "ne", name: "Nepali" },
+  { code: "es", name: "Spanish" },
+  { code: "fr", name: "French" },
+  { code: "de", name: "German" },
+  { code: "ja", name: "Japanese" },
+  { code: "zh", name: "Chinese" },
+  { code: "ar", name: "Arabic" }
 ];
 
-// Simplified translation function that returns the original text
-export const translateToLanguage = async (text: string, targetLang: string) => {
-  return text; // For now, just return the original text
+export const translateToLanguage = async (text: string, targetLanguage: string): Promise<string> => {
+  // Placeholder for actual translation service
+  console.log(`Translating to ${targetLanguage}: ${text}`);
+  return text;
 };

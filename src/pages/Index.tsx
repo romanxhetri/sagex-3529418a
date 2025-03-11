@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Zap, Bot, Laptop, Smartphone, Sparkles, Send } from "lucide-react";
+import { ArrowRight, Zap, Bot, Laptop, Smartphone, Sparkles, Send, SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { aiAutoUpdater } from "@/services/AIAutoUpdater";
 import { useToast } from "@/hooks/use-toast";
@@ -308,7 +308,7 @@ const Index: React.FC<IndexProps> = ({ adminPassword }) => {
               className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-6 hover:border-green-500/50 transition-all transform hover:rotate-1 hover:shadow-[0_0_15px_rgba(74,222,128,0.3)] relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <Search className="text-green-400 mb-4" size={32} />
+              <SearchIcon className="text-green-400 mb-4" size={32} />
               <h3 className="text-xl font-semibold mb-2">AI Search</h3>
               <p className="text-gray-400">Search the web with Perplexity-powered AI research</p>
             </motion.div>
