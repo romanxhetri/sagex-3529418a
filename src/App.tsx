@@ -16,6 +16,7 @@ const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Games = lazy(() => import("./pages/Games")); // New Games page
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
 
 // Loading fallback
@@ -41,19 +42,14 @@ const queryClient = new QueryClient({
 const AppRoutes = () => {
   const location = useLocation();
   const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind" | "magic">("thunder");
-  const [adminPassword, setAdminPassword] = useState<string | null>("6947");
+  const [adminPassword, setAdminPassword] = useState<string | null>("roman");
 
   // Set up admin password
   useEffect(() => {
-    // Set a default admin password or load from storage
-    const savedPassword = localStorage.getItem("adminPassword");
-    if (!savedPassword) {
-      const defaultPassword = "6947"; // Default password
-      localStorage.setItem("adminPassword", defaultPassword);
-      setAdminPassword(defaultPassword);
-    } else {
-      setAdminPassword(savedPassword);
-    }
+    // Set admin password to "roman"
+    const defaultPassword = "roman";
+    localStorage.setItem("adminPassword", defaultPassword);
+    setAdminPassword(defaultPassword);
   }, []);
   
   // Cycle through weather effects every 5 seconds
@@ -87,12 +83,13 @@ const AppRoutes = () => {
           <Route path="/mobiles" element={<Mobiles />} />
           <Route path="/updates" element={<Updates adminPassword={adminPassword} />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/games" element={<Games />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
       
       <div className="fixed bottom-1 left-1 text-[10px] text-gray-500 opacity-60">
-        Created by Roman Xhetri
+        Created by Roman Chetri
       </div>
     </>
   );

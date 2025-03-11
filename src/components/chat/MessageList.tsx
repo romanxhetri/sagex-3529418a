@@ -19,25 +19,47 @@ export const MessageList = ({ messages, isLoading }: MessageListProps) => {
         "brain": "🧠",
         "star": "⭐",
         "rocket": "🚀",
-        // Add more emoji mappings as needed
+        "laugh": "😂",
+        "lol": "🤣",
+        "cool": "😎",
+        "fire": "🔥",
+        "heart": "❤️",
+        "party": "🎉",
+        "wow": "😮",
+        "happy": "😄",
+        "dance": "💃",
+        "magic": "✨",
       };
       return emojiMap[shortcode] || match;
     });
   };
 
-  // Function to convert markdown images to HTML
+  // Function to convert markdown images to HTML and add stickers
   const renderMarkdownContent = (content: string) => {
     // Replace markdown image syntax with HTML
-    const contentWithImages = content.replace(
+    let contentWithImages = content.replace(
       /!\[(.*?)\]\((.*?)\)/g, 
-      '<img src="$2" alt="$1" class="rounded-lg max-w-full my-2 max-h-64" />'
+      '<img src="$2" alt="$1" class="rounded-lg max-w-full my-3 max-h-96" />'
     );
+    
+    // Add random stickers and enhance with emoji
+    const addRandomSticker = () => {
+      const stickers = [
+        '😂', '🤣', '😎', '🔥', '💯', '✨', '🚀', '🎉', '🥳', '😍', 
+        '💪', '👍', '🙌', '🤩', '🤪', '🧠', '🦄', '🎯', '🧸', '💫'
+      ];
+      return stickers[Math.floor(Math.random() * stickers.length)];
+    };
+    
+    // Add stickers to beginning and end of paragraphs for comic effect
+    contentWithImages = contentWithImages.replace(/<p>/g, `<p>${addRandomSticker()} `);
+    contentWithImages = contentWithImages.replace(/<\/p>/g, ` ${addRandomSticker()}</p>`);
     
     return { __html: contentWithImages };
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-5">
       {messages.map((message) => (
         <motion.div
           key={message.id}
@@ -47,22 +69,22 @@ export const MessageList = ({ messages, isLoading }: MessageListProps) => {
             message.role === "user" ? "justify-end" : "justify-start"
           }`}
         >
-          <div className="flex flex-col max-w-[80%] lg:max-w-[70%] space-y-2">
+          <div className="flex flex-col max-w-[85%] lg:max-w-[75%] space-y-2">
             <div
-              className={`p-4 rounded-lg ${
+              className={`p-5 rounded-lg text-lg shadow-lg ${
                 message.role === "user"
                   ? "bg-purple-600 text-white"
-                  : "bg-glass text-white"
+                  : "bg-glass text-white border border-purple-400/20"
               }`}
             >
               {message.type === "file" ? (
                 <div className="flex items-center space-x-2">
-                  <Upload size={20} />
-                  <span>{message.content}</span>
+                  <Upload size={24} />
+                  <span className="text-lg">{message.content}</span>
                 </div>
               ) : (
                 <div 
-                  className="whitespace-pre-wrap text-base"
+                  className="whitespace-pre-wrap text-base md:text-lg leading-relaxed"
                   dangerouslySetInnerHTML={renderMarkdownContent(message.content)}
                 />
               )}
@@ -75,11 +97,11 @@ export const MessageList = ({ messages, isLoading }: MessageListProps) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center space-x-2 text-gray-400"
+          className="flex items-center space-x-3 text-gray-400 p-4 bg-glass/30 rounded-lg w-fit"
         >
-          <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" />
-          <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-          <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+          <div className="w-4 h-4 bg-purple-400 rounded-full animate-bounce" />
+          <div className="w-4 h-4 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+          <div className="w-4 h-4 bg-purple-400 rounded-full animate-bounce [animation-delay:0.4s]" />
         </motion.div>
       )}
     </div>

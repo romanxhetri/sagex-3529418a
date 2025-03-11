@@ -49,7 +49,7 @@ export interface Laptop {
   rating: number;
   featured?: boolean;
   discount?: number;
-  category: "gaming" | "business" | "student" | "professional" | "budget";
+  category: "gaming" | "business" | "student" | "professional" | "budget" | "creative";
 }
 
 export interface Mobile {
@@ -71,5 +71,7 @@ export interface Mobile {
   rating: number;
   featured?: boolean;
   discount?: number;
+  weight?: string;
+  features?: string[];
   category: "flagship" | "mid-range" | "budget" | "camera" | "gaming";
 }
