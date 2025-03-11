@@ -59,16 +59,6 @@ export class AIAutoUpdaterIntegration {
     
     this.isInitialized = true;
     console.log('[AIAutoUpdaterIntegration] Initialized');
-    
-    // Start the AIAutoUpdater
-    setTimeout(() => {
-      try {
-        aiAutoUpdater.start();
-        console.log('[AIAutoUpdaterIntegration] AIAutoUpdater started');
-      } catch (error) {
-        console.error('[AIAutoUpdaterIntegration] Error starting AIAutoUpdater:', error);
-      }
-    }, 500);
   }
 
   /**

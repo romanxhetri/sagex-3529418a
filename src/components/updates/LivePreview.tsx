@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+
+import React from "react";
+import { motion } from "framer-motion";
 
 interface LivePreviewProps {
   code: string;
@@ -7,228 +8,252 @@ interface LivePreviewProps {
 }
 
 export const LivePreview: React.FC<LivePreviewProps> = ({ code, isLoading = false }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
-  // Process code to make it suitable for preview
-  const processCode = (codeString: string): string => {
-    // Remove import statements
-    let processedCode = codeString.replace(/^import\s+.*?;?\s*$/gm, '');
-    
-    // Remove export statements but keep the component
-    processedCode = processedCode.replace(/export\s+(default\s+)?/g, '');
-    
-    // Create a complete HTML document
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { 
-              margin: 0; 
-              font-family: system-ui, sans-serif; 
-              color: white;
-              background-color: transparent;
-            }
-            #root {
-              padding: 1rem;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-            }
-          </style>
-          <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-          <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-          <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <script>
-            // Mock common dependencies
-            const mockModules = {
-              'lucide-react': {
-                Button: (props) => {
-                  const {children, ...rest} = props;
-                  return React.createElement('button', 
-                    {...rest, className: 'px-4 py-2 bg-purple-600 text-white rounded'}, 
-                    children
-                  );
-                },
-                Info: () => React.createElement('span', {}, 'ℹ️'),
-                ArrowRight: () => React.createElement('span', {}, '→'),
-                Download: () => React.createElement('span', {}, '↓'),
-                Settings: () => React.createElement('span', {}, '⚙️'),
-                User: () => React.createElement('span', {}, '👤'),
-                Home: () => React.createElement('span', {}, '🏠'),
-                Search: () => React.createElement('span', {}, '🔍'),
-                Menu: () => React.createElement('span', {}, '☰'),
-                X: () => React.createElement('span', {}, '✕'),
-                Check: () => React.createElement('span', {}, '✓'),
-                ChevronRight: () => React.createElement('span', {}, '❯'),
-                ChevronLeft: () => React.createElement('span', {}, '❮'),
-                ChevronDown: () => React.createElement('span', {}, '▼'),
-                ChevronUp: () => React.createElement('span', {}, '▲'),
-                Plus: () => React.createElement('span', {}, '+'),
-                Minus: () => React.createElement('span', {}, '-'),
-                Calendar: () => React.createElement('span', {}, '📅'),
-                Clock: () => React.createElement('span', {}, '🕒'),
-                Mail: () => React.createElement('span', {}, '✉️'),
-                Phone: () => React.createElement('span', {}, '📞'),
-                Star: () => React.createElement('span', {}, '★'),
-                Heart: () => React.createElement('span', {}, '❤️'),
-                Trash: () => React.createElement('span', {}, '🗑️'),
-                Edit: () => React.createElement('span', {}, '✏️'),
-                Copy: () => React.createElement('span', {}, '📋'),
-                Save: () => React.createElement('span', {}, '💾'),
-                Upload: () => React.createElement('span', {}, '📤'),
-                DollarSign: () => React.createElement('span', {}, '$'),
-                CreditCard: () => React.createElement('span', {}, '💳'),
-                ShoppingCart: () => React.createElement('span', {}, '🛒'),
-                Filter: () => React.createElement('span', {}, '🔍'),
-                Sun: () => React.createElement('span', {}, '☀️'),
-                Moon: () => React.createElement('span', {}, '🌙'),
-                // Add more as needed
-              },
-              '@/components/ui/button': {
-                Button: (props) => {
-                  const {children, ...rest} = props;
-                  return React.createElement('button', 
-                    {...rest, className: 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700'}, 
-                    children
-                  );
-                }
-              },
-              '@/components/ui/card': {
-                Card: (props) => React.createElement('div', 
-                  {...props, className: 'border rounded-lg p-4 shadow-lg ' + (props.className || '')}, 
-                  props.children
-                ),
-                CardHeader: (props) => React.createElement('div', 
-                  {...props, className: 'mb-2 pb-2 border-b ' + (props.className || '')}, 
-                  props.children
-                ),
-                CardTitle: (props) => React.createElement('h3', 
-                  {...props, className: 'text-lg font-bold ' + (props.className || '')}, 
-                  props.children
-                ),
-                CardDescription: (props) => React.createElement('p', 
-                  {...props, className: 'text-sm text-gray-500 ' + (props.className || '')}, 
-                  props.children
-                ),
-                CardContent: (props) => React.createElement('div', 
-                  {...props, className: 'py-2 ' + (props.className || '')}, 
-                  props.children
-                ),
-                CardFooter: (props) => React.createElement('div', 
-                  {...props, className: 'mt-2 pt-2 border-t ' + (props.className || '')}, 
-                  props.children
-                ),
-              }
-              // Add more module mocks as needed
-            };
+  React.useEffect(() => {
+    // Reset error state when code changes
+    setErrorMessage(null);
+  }, [code]);
 
-            // Setup require/import mock
-            window.require = (module) => {
-              if (mockModules[module]) {
-                return mockModules[module];
-              }
-              console.warn('Module not mocked:', module);
-              return {};
-            };
-            
-            // Make React available globally for the code
-            window.React = React;
-          </script>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="text/babel" data-type="module">
-            try {
-              ${processedCode}
-              
-              // Find the last React component in the code
-              const componentNames = Object.keys(window).filter(key => 
-                typeof window[key] === 'function' && 
-                /^[A-Z]/.test(key) && 
-                key !== 'React'
-              );
-              
-              // Use the last defined component or a default message
-              const ComponentToRender = componentNames.length > 0 
-                ? window[componentNames[componentNames.length - 1]] 
-                : () => React.createElement('div', {}, 'No component found');
-              
-              ReactDOM.render(
-                React.createElement(ComponentToRender, {}),
-                document.getElementById('root')
-              );
-            } catch (error) {
-              ReactDOM.render(
-                React.createElement('div', {
-                  style: {
-                    color: 'red',
-                    padding: '1rem',
-                    border: '1px solid red',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'rgba(254, 202, 202, 0.1)'
-                  }
-                }, 'Error: ' + error.message),
-                document.getElementById('root')
-              );
-              console.error('Preview error:', error);
-            }
-          </script>
-        </body>
-      </html>
-    `;
+  // A very basic safety check for potentially harmful code
+  const isSafeCode = (codeString: string): boolean => {
+    const dangerousPatterns = [
+      'document.cookie',
+      'localStorage',
+      'sessionStorage',
+      'window.open',
+      'eval(',
+      'new Function(',
+      'fetch('
+    ];
+    
+    return !dangerousPatterns.some(pattern => codeString.includes(pattern));
   };
 
-  useEffect(() => {
-    if (!iframeRef.current || isLoading) return;
+  // Find component name in code
+  const extractComponentName = (codeString: string): string | null => {
+    // Try to find export statements
+    const exportMatch = codeString.match(/export\s+(const|function|class)\s+(\w+)/);
+    if (exportMatch && exportMatch[2]) {
+      return exportMatch[2];
+    }
+    
+    // Try to find default export statements
+    const defaultExportMatch = codeString.match(/export\s+default\s+(\w+)/);
+    if (defaultExportMatch && defaultExportMatch[1]) {
+      return defaultExportMatch[1];
+    }
+    
+    // Try to find component declaration
+    const constMatch = codeString.match(/const\s+(\w+)\s*=\s*\(\)/);
+    if (constMatch && constMatch[1]) {
+      return constMatch[1];
+    }
+    
+    return null;
+  };
+
+  // Remove import statements from code to prevent errors
+  const processCodeForEvaluation = (codeString: string): string => {
+    // Remove all import statements
+    const codeWithoutImports = codeString.replace(/import.*?from\s+['"].*?['"];?/g, '');
+    
+    // Replace export statements with simple variable declarations
+    const codeWithoutExports = codeWithoutImports.replace(/export\s+(default\s+)?/g, '');
+    
+    return codeWithoutExports;
+  };
+
+  // Simple component renderer
+  const renderComponent = () => {
+    if (!code || isLoading) return null;
+    
+    if (!isSafeCode(code)) {
+      return <div className="text-red-500">Error: Code contains potentially unsafe operations.</div>;
+    }
     
     try {
-      const processedCode = processCode(code);
-      const iframe = iframeRef.current;
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      // Extract component name
+      const componentName = extractComponentName(code);
       
-      if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(processedCode);
-        iframeDoc.close();
-        setError(null);
+      // Process code to remove imports and exports
+      const processedCode = processCodeForEvaluation(code);
+      
+      // Create a dynamic component from the code string
+      const transformedCode = `
+        try {
+          ${processedCode}
+          return typeof ${componentName} !== 'undefined' ? ${componentName} : null;
+        } catch (error) {
+          console.error('Component evaluation error:', error);
+          return null;
+        }
+      `;
+      
+      // Create a function that returns the component
+      let ComponentFunction;
+      try {
+        // eslint-disable-next-line no-new-func
+        ComponentFunction = new Function('React', 'motion', 'require', 'module', 'exports', transformedCode);
+      } catch (error) {
+        console.error("Error creating function:", error);
+        throw error;
       }
-    } catch (err) {
-      console.error("Preview error:", err);
-      setError(err instanceof Error ? err.message : "Unknown error");
+      
+      // Create a mock require function to handle imports
+      const mockRequire = (moduleName: string) => {
+        if (moduleName === 'react') return React;
+        if (moduleName === 'framer-motion') return { motion };
+        if (moduleName.startsWith('@/components/ui/')) {
+          // Mock shadcn components
+          return {
+            Button: (props: any) => <button className="px-4 py-2 bg-purple-600 text-white rounded" {...props}>{props.children}</button>,
+            Card: (props: any) => <div className="border rounded p-4 bg-gray-800" {...props}>{props.children}</div>,
+            CardContent: (props: any) => <div className="py-2" {...props}>{props.children}</div>,
+            CardFooter: (props: any) => <div className="pt-2 border-t border-gray-700" {...props}>{props.children}</div>,
+            CardHeader: (props: any) => <div className="pb-2 border-b border-gray-700" {...props}>{props.children}</div>,
+            CardTitle: (props: any) => <h3 className="text-lg font-bold" {...props}>{props.children}</h3>,
+            Input: (props: any) => <input className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props} />,
+            Label: (props: any) => <label className="block text-sm font-medium" {...props}>{props.children}</label>,
+            Select: (props: any) => <select className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props}>{props.children}</select>,
+            Textarea: (props: any) => <textarea className="px-2 py-1 bg-gray-700 border border-gray-600 rounded" {...props}>{props.children}</textarea>,
+          };
+        }
+        if (moduleName.startsWith('lucide-react')) {
+          // Mock Lucide icons
+          const IconComponent = (props: any) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" 
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            </svg>
+          );
+          return {
+            Sparkles: IconComponent,
+            Bot: IconComponent,
+            Code: IconComponent,
+            Play: IconComponent,
+            Zap: IconComponent,
+            Star: IconComponent,
+            Heart: IconComponent,
+            RefreshCw: IconComponent,
+            Check: IconComponent,
+            AlertCircle: IconComponent,
+            MessageCircle: IconComponent,
+            Share2: IconComponent,
+            User: IconComponent,
+          };
+        }
+        return {}; // Return empty object for other imports
+      };
+      
+      // Create mock module and exports objects
+      const mockModule: { exports: any } = { exports: {} };
+      const mockExports = {};
+      
+      try {
+        // Execute the component function
+        const Component = ComponentFunction(React, motion, mockRequire, mockModule, mockExports);
+        
+        if (Component && typeof Component === 'function') {
+          return (
+            <ErrorBoundary>
+              <Component />
+            </ErrorBoundary>
+          );
+        } else if (React.isValidElement(Component)) {
+          return Component;
+        } else {
+          // If the componentName is found but not returned correctly, try to create it manually
+          if (componentName) {
+            const fallbackCode = `
+              ${processedCode}
+              try {
+                const FallbackComponent = ${componentName};
+                return FallbackComponent ? React.createElement(FallbackComponent) : null;
+              } catch (e) {
+                console.error('Fallback error:', e);
+                return null;
+              }
+            `;
+            
+            try {
+              // eslint-disable-next-line no-new-func
+              const FallbackFunction = new Function('React', 'motion', fallbackCode);
+              return FallbackFunction(React, motion);
+            } catch (error) {
+              console.error("Fallback creation error:", error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Component execution error:", error);
+        throw error;
+      }
+      
+      return (
+        <div className="text-yellow-500">
+          Could not render component. The component might have dependencies that cannot be mocked in the preview.
+        </div>
+      );
+    } catch (error) {
+      console.error('Error rendering component:', error);
+      setErrorMessage((error as Error).message);
+      return (
+        <div className="p-4 bg-red-900/30 text-red-400 rounded-lg border border-red-500/30">
+          <h3 className="font-medium mb-2">Error rendering component</h3>
+          <pre className="text-sm overflow-auto">{(error as Error).message}</pre>
+        </div>
+      );
     }
-  }, [code, isLoading]);
+  };
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-gray-900 rounded-lg border border-gray-800">
-        <Loader2 className="animate-spin h-8 w-8 text-purple-500 mb-4" />
-        <p className="text-gray-400">Generating preview...</p>
-      </div>
-    );
-  }
+  // Error boundary component to catch runtime errors
+  class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+    constructor(props: {children: React.ReactNode}) {
+      super(props);
+      this.state = { hasError: false, error: null };
+    }
 
-  if (error) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-gray-900 rounded-lg border border-gray-800">
-        <div className="text-red-500 mb-4">⚠️</div>
-        <h3 className="text-xl font-semibold text-red-400 mb-2">Preview Error</h3>
-        <p className="text-gray-400 max-w-md mb-6">{error}</p>
-      </div>
-    );
+    static getDerivedStateFromError(error: Error) {
+      return { hasError: true, error };
+    }
+
+    render() {
+      if (this.state.hasError) {
+        return (
+          <div className="p-4 bg-red-900/30 text-red-400 rounded-lg border border-red-500/30">
+            <h3 className="font-medium mb-2">Component Error</h3>
+            <pre className="text-sm overflow-auto">{this.state.error?.message}</pre>
+          </div>
+        );
+      }
+
+      return this.props.children;
+    }
   }
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden border border-gray-800 bg-glass">
-      <iframe
-        ref={iframeRef}
-        title="Live Preview"
-        className="w-full h-[500px] border-0"
-        sandbox="allow-scripts"
-      />
+    <div className="w-full h-full bg-gray-900 rounded-lg border border-gray-800 overflow-auto">
+      <div className="p-2 border-b border-gray-800 bg-gray-950 text-gray-400 text-sm font-medium">
+        Preview
+      </div>
+      
+      <div className="p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+          </div>
+        ) : errorMessage ? (
+          <div className="p-4 bg-red-900/30 text-red-400 rounded-lg border border-red-500/30">
+            <h3 className="font-medium mb-2">Error rendering component</h3>
+            <pre className="text-sm overflow-auto">{errorMessage}</pre>
+          </div>
+        ) : (
+          <div className="bg-gray-950 rounded-lg border border-gray-800 p-4 min-h-64">
+            {renderComponent()}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
