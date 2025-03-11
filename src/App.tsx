@@ -14,7 +14,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Laptops = lazy(() => import("./pages/Laptops"));
 const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
-const Search = lazy(() => import("./pages/Search"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
 
@@ -40,7 +40,7 @@ const queryClient = new QueryClient({
 // Route component to manage scene rendering
 const AppRoutes = () => {
   const location = useLocation();
-  const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind">("thunder");
+  const [currentWeather, setCurrentWeather] = useState<"thunder" | "rain" | "fire" | "wind" | "magic">("thunder");
   const [adminPassword, setAdminPassword] = useState<string | null>("6947");
 
   // Set up admin password
@@ -64,7 +64,8 @@ const AppRoutes = () => {
           case "thunder": return "rain";
           case "rain": return "fire";
           case "fire": return "wind";
-          case "wind": return "thunder";
+          case "wind": return "magic";
+          case "magic": return "thunder";
           default: return "thunder";
         }
       });
@@ -75,7 +76,7 @@ const AppRoutes = () => {
   
   return (
     <>
-      {/* Global 3D background with weather effects */}
+      {/* Global 3D background with weather effects - increased intensity */}
       <UniverseBackground weatherType={currentWeather} />
       
       <Suspense fallback={<LoadingFallback />}>
@@ -85,7 +86,7 @@ const AppRoutes = () => {
           <Route path="/laptops" element={<Laptops />} />
           <Route path="/mobiles" element={<Mobiles />} />
           <Route path="/updates" element={<Updates adminPassword={adminPassword} />} />
-          <Route path="/search" element={<Search />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -104,7 +105,7 @@ const App = () => {
     // Hide intro after a shorter time for better performance
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 3000); // Reduced from 5000 for better performance
+    }, 2500); // Reduced for better performance
 
     // Initialize the AIAutoUpdater integration
     AIAutoUpdaterIntegration.initialize();

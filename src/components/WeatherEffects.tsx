@@ -1,337 +1,318 @@
 
-import React, { useRef, useEffect, useState } from "react";
-import * as THREE from "three";
+import React, { useEffect, useRef } from 'react';
 
 interface WeatherEffectsProps {
-  weatherType: "thunder" | "rain" | "fire" | "wind";
+  weatherType: "thunder" | "rain" | "fire" | "wind" | "magic";
 }
 
 export const WeatherEffects: React.FC<WeatherEffectsProps> = ({ weatherType }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
+  
   useEffect(() => {
-    if (!containerRef.current) return;
-    setMounted(true);
+    if (!canvasRef.current || !containerRef.current) return;
 
-    const container = containerRef.current;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
 
-    camera.position.z = 5;
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-    // Particles for different weather effects
+    // Particles array
+    let particles: {
+      x: number;
+      y: number;
+      size: number;
+      speedX: number;
+      speedY: number;
+      color: string;
+      opacity: number;
+      life: number;
+      maxLife: number;
+    }[] = [];
+
+    const fireColors = ['#FF8C00', '#FF4500', '#FF6347', '#FF0000', '#FFD700'];
+    const rainColors = ['#ADD8E6', '#87CEEB', '#00BFFF', '#1E90FF', '#4169E1'];
+    const thunderColors = ['#FFD700', '#FFFF00', '#F8F8FF', '#FFFFFF', '#FFFAFA'];
+    const windColors = ['#F5F5F5', '#F8F8FF', '#E6E6FA', '#D8BFD8', '#FFFFFF'];
+    const magicColors = ['#FF00FF', '#8A2BE2', '#9400D3', '#9932CC', '#BA55D3'];
+    
+    // Function to create new particles
     const createParticles = () => {
-      // Clear existing particles
-      scene.children.forEach(child => {
-        if (child instanceof THREE.Points) {
-          scene.remove(child);
+      const count = weatherType === 'fire' ? 15 : 
+                   weatherType === 'rain' ? 20 : 
+                   weatherType === 'thunder' ? 5 :
+                   weatherType === 'magic' ? 15 : 10;
+      
+      for (let i = 0; i < count; i++) {
+        let x, y, speedX, speedY, size, color, life, maxLife, opacity;
+        
+        if (weatherType === 'fire') {
+          x = Math.random() * canvas.width;
+          y = canvas.height + Math.random() * 20;
+          speedX = (Math.random() - 0.5) * 3;
+          speedY = -3 - Math.random() * 3;
+          size = 5 + Math.random() * 15;
+          color = fireColors[Math.floor(Math.random() * fireColors.length)];
+          opacity = 0.7 + Math.random() * 0.3;
+          life = maxLife = 50 + Math.random() * 30;
+        } 
+        else if (weatherType === 'rain') {
+          x = Math.random() * canvas.width;
+          y = -20;
+          speedX = (Math.random() - 0.5) * 2;
+          speedY = 10 + Math.random() * 15;
+          size = 1 + Math.random() * 3;
+          color = rainColors[Math.floor(Math.random() * rainColors.length)];
+          opacity = 0.5 + Math.random() * 0.5;
+          life = maxLife = 100 + Math.random() * 50;
+        } 
+        else if (weatherType === 'thunder') {
+          x = Math.random() * canvas.width;
+          y = Math.random() * (canvas.height / 3);
+          speedX = (Math.random() - 0.5) * 5;
+          speedY = Math.random() * 5;
+          size = 2 + Math.random() * 8;
+          color = thunderColors[Math.floor(Math.random() * thunderColors.length)];
+          opacity = 0.8 + Math.random() * 0.2;
+          life = maxLife = 10 + Math.random() * 20;
+        } 
+        else if (weatherType === 'magic') {
+          x = Math.random() * canvas.width;
+          y = Math.random() * canvas.height;
+          speedX = (Math.random() - 0.5) * 4;
+          speedY = (Math.random() - 0.5) * 4;
+          size = 3 + Math.random() * 7;
+          color = magicColors[Math.floor(Math.random() * magicColors.length)];
+          opacity = 0.6 + Math.random() * 0.4;
+          life = maxLife = 60 + Math.random() * 40;
         }
-      });
-
-      let particleGeometry, particleMaterial, particles;
-
-      switch (weatherType) {
-        case "thunder":
-          // Lightning bolts
-          const lightningGroup = new THREE.Group();
-          
-          const createLightning = () => {
-            const points = [];
-            const segments = 10;
-            
-            for (let i = 0; i <= segments; i++) {
-              const y = 10 - i * 2;
-              const xVariation = i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 3;
-              points.push(new THREE.Vector3(xVariation, y, 0));
-            }
-            
-            const lightningGeometry = new THREE.BufferGeometry().setFromPoints(points);
-            const lightningMaterial = new THREE.LineBasicMaterial({ 
-              color: 0xaaddff,
-              linewidth: 3
-            });
-            
-            return new THREE.Line(lightningGeometry, lightningMaterial);
-          };
-          
-          // Create multiple lightning bolts
-          for (let i = 0; i < 3; i++) {
-            const lightning = createLightning();
-            lightning.position.x = (Math.random() - 0.5) * 20;
-            lightning.position.z = (Math.random() - 0.5) * 5;
-            lightning.visible = false;
-            lightningGroup.add(lightning);
-          }
-          
-          scene.add(lightningGroup);
-          
-          // Lightning flash animation
-          const animateLightning = () => {
-            lightningGroup.children.forEach(lightning => {
-              lightning.visible = false;
-            });
-            
-            // Random flash
-            if (Math.random() > 0.95) {
-              const randomIndex = Math.floor(Math.random() * lightningGroup.children.length);
-              const lightning = lightningGroup.children[randomIndex];
-              lightning.visible = true;
-              
-              // Create a brief flash of light in the scene
-              const flash = new THREE.PointLight(0xaaddff, 100, 20);
-              flash.position.copy(lightning.position);
-              scene.add(flash);
-              
-              // Remove the flash after a short time
-              setTimeout(() => {
-                scene.remove(flash);
-              }, 100 + Math.random() * 50);
-            }
-            
-            requestAnimationFrame(animateLightning);
-          };
-          
-          animateLightning();
-          break;
-
-        case "rain":
-          // Rain drops
-          particleGeometry = new THREE.BufferGeometry();
-          const rainCount = 15000;
-          const positions = new Float32Array(rainCount * 3);
-          const rainVelocities = new Float32Array(rainCount);
-          
-          for (let i = 0; i < rainCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 100; // x
-            positions[i + 1] = Math.random() * 100; // y
-            positions[i + 2] = (Math.random() - 0.5) * 100; // z
-            
-            rainVelocities[i / 3] = 0.1 + Math.random() * 0.3;
-          }
-          
-          particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-          particleMaterial = new THREE.PointsMaterial({
-            color: 0x5599ff,
-            size: 0.1,
-            transparent: true,
-            opacity: 0.6
-          });
-          
-          particles = new THREE.Points(particleGeometry, particleMaterial);
-          scene.add(particles);
-          
-          // Rain animation
-          const animateRain = () => {
-            const positions = particles.geometry.attributes.position.array as Float32Array;
-            
-            for (let i = 0; i < positions.length; i += 3) {
-              // Update y position (falling rain)
-              positions[i + 1] -= rainVelocities[i / 3];
-              
-              // Reset rain drop when it falls below the scene
-              if (positions[i + 1] < -50) {
-                positions[i + 1] = 50;
-              }
-            }
-            
-            particles.geometry.attributes.position.needsUpdate = true;
-            requestAnimationFrame(animateRain);
-          };
-          
-          animateRain();
-          break;
-
-        case "fire":
-          // Fire particles
-          const fireGroup = new THREE.Group();
-          
-          // Create base for fire
-          const baseGeometry = new THREE.ConeGeometry(2, 4, 8);
-          const baseMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xff5500,
-            transparent: true,
-            opacity: 0.7
-          });
-          const baseCone = new THREE.Mesh(baseGeometry, baseMaterial);
-          baseCone.position.y = -2;
-          fireGroup.add(baseCone);
-          
-          // Create fire particles
-          const fireParticleCount = 1000;
-          particleGeometry = new THREE.BufferGeometry();
-          const firePositions = new Float32Array(fireParticleCount * 3);
-          const fireSizes = new Float32Array(fireParticleCount);
-          const fireColors = new Float32Array(fireParticleCount * 3);
-          
-          for (let i = 0; i < fireParticleCount; i++) {
-            const i3 = i * 3;
-            const radius = Math.random() * 1.5;
-            const theta = Math.random() * Math.PI * 2;
-            const y = Math.random() * 4;
-            
-            firePositions[i3] = radius * Math.cos(theta);
-            firePositions[i3 + 1] = y - 2; // Center at the base cone's position
-            firePositions[i3 + 2] = radius * Math.sin(theta);
-            
-            fireSizes[i] = 0.1 + Math.random() * 0.2;
-            
-            // Color gradient: red -> orange -> yellow
-            const colorRatio = y / 4;
-            fireColors[i3] = 1.0; // R
-            fireColors[i3 + 1] = 0.3 + colorRatio * 0.7; // G
-            fireColors[i3 + 2] = colorRatio * 0.5; // B
-          }
-          
-          particleGeometry.setAttribute('position', new THREE.BufferAttribute(firePositions, 3));
-          particleGeometry.setAttribute('size', new THREE.BufferAttribute(fireSizes, 1));
-          particleGeometry.setAttribute('color', new THREE.BufferAttribute(fireColors, 3));
-          
-          const fireShaderMaterial = new THREE.PointsMaterial({
-            size: 0.5,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8
-          });
-          
-          const fireParticles = new THREE.Points(particleGeometry, fireShaderMaterial);
-          fireGroup.add(fireParticles);
-          scene.add(fireGroup);
-          
-          // Add a point light to illuminate the scene
-          const fireLight = new THREE.PointLight(0xff5500, 1, 10);
-          fireLight.position.set(0, 0, 0);
-          fireGroup.add(fireLight);
-          
-          // Fire animation
-          const animateFire = () => {
-            const positions = fireParticles.geometry.attributes.position.array as Float32Array;
-            
-            for (let i = 0; i < positions.length; i += 3) {
-              // Move particles upward
-              positions[i + 1] += 0.03 + Math.random() * 0.05;
-              
-              // Add some random horizontal movement
-              positions[i] += (Math.random() - 0.5) * 0.05;
-              positions[i + 2] += (Math.random() - 0.5) * 0.05;
-              
-              // Reset particles that go too high
-              if (positions[i + 1] > 3) {
-                const radius = Math.random() * 1.5;
-                const theta = Math.random() * Math.PI * 2;
-                
-                positions[i] = radius * Math.cos(theta);
-                positions[i + 1] = -2 + Math.random() * 0.5;
-                positions[i + 2] = radius * Math.sin(theta);
-              }
-            }
-            
-            fireParticles.geometry.attributes.position.needsUpdate = true;
-            
-            // Pulsate the light
-            fireLight.intensity = 1 + Math.sin(Date.now() * 0.01) * 0.5;
-            
-            requestAnimationFrame(animateFire);
-          };
-          
-          animateFire();
-          break;
-
-        case "wind":
-          // Wind particles
-          particleGeometry = new THREE.BufferGeometry();
-          const windCount = 3000;
-          const windPositions = new Float32Array(windCount * 3);
-          
-          for (let i = 0; i < windCount * 3; i += 3) {
-            windPositions[i] = (Math.random() - 0.5) * 100; // x
-            windPositions[i + 1] = (Math.random() - 0.5) * 50; // y
-            windPositions[i + 2] = (Math.random() - 0.5) * 100; // z
-          }
-          
-          particleGeometry.setAttribute('position', new THREE.BufferAttribute(windPositions, 3));
-          particleMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 0.2,
-            transparent: true,
-            opacity: 0.3
-          });
-          
-          particles = new THREE.Points(particleGeometry, particleMaterial);
-          scene.add(particles);
-          
-          // Wind animation
-          const windSpeed = 0.3;
-          let windTime = 0;
-          
-          const animateWind = () => {
-            windTime += 0.01;
-            
-            const positions = particles.geometry.attributes.position.array as Float32Array;
-            
-            for (let i = 0; i < positions.length; i += 3) {
-              // Create wave-like patterns for wind
-              positions[i] += Math.sin(windTime + i * 0.1) * 0.05 + windSpeed;
-              positions[i + 1] += Math.cos(windTime + i * 0.05) * 0.05;
-              
-              // Reset wind particles when they move too far
-              if (positions[i] > 50) {
-                positions[i] = -50;
-                positions[i + 1] = (Math.random() - 0.5) * 50;
-                positions[i + 2] = (Math.random() - 0.5) * 100;
-              }
-            }
-            
-            particles.geometry.attributes.position.needsUpdate = true;
-            requestAnimationFrame(animateWind);
-          };
-          
-          animateWind();
-          break;
+        else { // wind
+          x = -20;
+          y = Math.random() * canvas.height;
+          speedX = 8 + Math.random() * 12;
+          speedY = (Math.random() - 0.5) * 5;
+          size = 1 + Math.random() * 3;
+          color = windColors[Math.floor(Math.random() * windColors.length)];
+          opacity = 0.3 + Math.random() * 0.4;
+          life = maxLife = 80 + Math.random() * 40;
+        }
+        
+        particles.push({
+          x, y, size, speedX, speedY, color, opacity, life, maxLife
+        });
       }
     };
-
-    createParticles();
-
-    // Handle window resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Function to update particles
+    const updateParticles = () => {
+      for (let i = 0; i < particles.length; i++) {
+        let p = particles[i];
+        
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.life--;
+        
+        // Modify behavior based on weather type
+        if (weatherType === 'fire') {
+          p.speedX += (Math.random() - 0.5) * 0.3;
+          p.speedY += (Math.random() - 0.5) * 0.2 - 0.1;
+          p.size -= 0.1;
+          p.opacity = (p.life / p.maxLife) * (0.7 + Math.random() * 0.3);
+        } 
+        else if (weatherType === 'rain') {
+          p.speedX += (Math.random() - 0.5) * 0.1;
+          p.opacity = (p.life / p.maxLife) * 0.8;
+        } 
+        else if (weatherType === 'thunder') {
+          // Make thunder particles flicker
+          p.opacity = Math.random() * 0.5 + 0.5;
+          p.size += (Math.random() - 0.5) * 2;
+        } 
+        else if (weatherType === 'magic') {
+          // Make magic particles swirl
+          p.speedX += Math.sin(p.life * 0.1) * 0.2;
+          p.speedY += Math.cos(p.life * 0.1) * 0.2;
+          p.size += Math.sin(p.life * 0.2) * 0.3;
+          p.opacity = 0.4 + Math.sin(p.life * 0.1) * 0.4;
+        }
+        else { // wind
+          p.speedY += (Math.random() - 0.5) * 0.2;
+          p.opacity = (p.life / p.maxLife) * 0.4;
+        }
+        
+        // Remove particles that are off-screen or out of life
+        if (p.life <= 0 || 
+            p.x < -50 || 
+            p.x > canvas.width + 50 || 
+            p.y < -50 || 
+            p.y > canvas.height + 50 ||
+            p.size <= 0) {
+          particles.splice(i, 1);
+          i--;
+        }
+      }
     };
-
-    window.addEventListener("resize", handleResize);
-
+    
+    // Function to draw particles
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Weather type specific effects
+      if (weatherType === 'thunder' && Math.random() < 0.03) {
+        // Lightning flash
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3 + 0.1})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Lightning bolt
+        if (Math.random() < 0.5) {
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 2 + Math.random() * 4;
+          ctx.beginPath();
+          let x = Math.random() * canvas.width;
+          let y = 0;
+          ctx.moveTo(x, y);
+          
+          const segments = 5 + Math.floor(Math.random() * 5);
+          for (let i = 0; i < segments; i++) {
+            x += (Math.random() - 0.5) * 100;
+            y += canvas.height / segments;
+            ctx.lineTo(x, y);
+          }
+          
+          ctx.stroke();
+        }
+      }
+      
+      // Draw all particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        
+        ctx.beginPath();
+        
+        if (weatherType === 'rain') {
+          // Draw raindrops as lines
+          ctx.strokeStyle = `rgba(${hexToRgb(p.color)}, ${p.opacity})`;
+          ctx.lineWidth = p.size / 2;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + p.speedX * 0.5, p.y + p.speedY * 0.5);
+          ctx.stroke();
+        } 
+        else if (weatherType === 'thunder') {
+          // Draw thunder particles as glowing dots
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+          gradient.addColorStop(0, `rgba(${hexToRgb(p.color)}, ${p.opacity})`);
+          gradient.addColorStop(1, `rgba(${hexToRgb(p.color)}, 0)`);
+          
+          ctx.fillStyle = gradient;
+          ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        else if (weatherType === 'magic') {
+          // Draw magic particles as stars or sparkles
+          ctx.fillStyle = `rgba(${hexToRgb(p.color)}, ${p.opacity})`;
+          
+          if (Math.random() < 0.5) {
+            // Draw star
+            const spikes = 5;
+            const outerRadius = p.size;
+            const innerRadius = p.size / 2;
+            
+            ctx.beginPath();
+            for (let i = 0; i < spikes * 2; i++) {
+              const radius = i % 2 === 0 ? outerRadius : innerRadius;
+              const angle = (Math.PI * 2) * (i / (spikes * 2));
+              const x = p.x + radius * Math.cos(angle);
+              const y = p.y + radius * Math.sin(angle);
+              
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add glow
+            const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+            gradient.addColorStop(0, `rgba(${hexToRgb(p.color)}, ${p.opacity * 0.5})`);
+            gradient.addColorStop(1, `rgba(${hexToRgb(p.color)}, 0)`);
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        else {
+          // Draw regular particles (fire and wind)
+          ctx.fillStyle = `rgba(${hexToRgb(p.color)}, ${p.opacity})`;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add glow effect for fire
+          if (weatherType === 'fire') {
+            const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+            gradient.addColorStop(0, `rgba(${hexToRgb(p.color)}, ${p.opacity * 0.5})`);
+            gradient.addColorStop(1, `rgba(${hexToRgb(p.color)}, 0)`);
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    };
+    
+    // Helper function to convert hex to rgb
+    const hexToRgb = (hex: string) => {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      
+      // Convert 3-digit hex to 6-digits
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      
+      // Parse the values
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      return `${r}, ${g}, ${b}`;
+    };
+    
+    // Animation loop
     const animate = () => {
+      createParticles();
+      updateParticles();
+      drawParticles();
       requestAnimationFrame(animate);
-      renderer.render(scene, camera);
     };
-
+    
+    // Start animation
     animate();
-
+    
     // Clean up
     return () => {
-      window.removeEventListener("resize", handleResize);
-      if (renderer.domElement && container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-      // Dispose of geometries and materials
-      scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          if (object.material instanceof THREE.Material) {
-            object.material.dispose();
-          } else if (Array.isArray(object.material)) {
-            object.material.forEach((material) => material.dispose());
-          }
-        }
-      });
+      window.removeEventListener('resize', resizeCanvas);
     };
   }, [weatherType]);
-
-  return <div ref={containerRef} className="absolute inset-0 z-0" style={{ pointerEvents: "none" }} />;
+  
+  return (
+    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-0 opacity-80">
+      <canvas ref={canvasRef} className="absolute inset-0" />
+    </div>
+  );
 };

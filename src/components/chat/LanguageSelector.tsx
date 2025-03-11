@@ -1,8 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Check, ChevronDown, Globe } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { languages } from '@/utils/languages';
 import { SupportedLanguage } from '@/types/chat';
-import { Check, Globe } from 'lucide-react';
 
 interface LanguageSelectorProps {
   selectedLanguage: SupportedLanguage;
@@ -10,35 +18,42 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector = ({ selectedLanguage, onLanguageChange }: LanguageSelectorProps) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const selectedLanguageObj = languages.find(lang => lang.code === selectedLanguage);
+  
+  const handleLanguageChange = (value: string) => {
+    // Type assertion as SupportedLanguage
+    onLanguageChange(value as SupportedLanguage);
+    setIsOpen(false);
+  };
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-glass hover:bg-glass-light transition-colors"
-      >
-        <Globe size={20} />
-        <span>{languages.find(l => l.code === selectedLanguage)?.nativeName}</span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-48 rounded-lg bg-glass-dark border border-glass-border shadow-lg">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => {
-                onLanguageChange(lang.code);
-                setIsOpen(false);
-              }}
-              className="flex items-center justify-between w-full px-4 py-2 hover:bg-purple-500/10 transition-colors"
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-300 hover:text-white">
+          <Globe size={16} />
+          <span>{selectedLanguageObj?.nativeName}</span>
+          <ChevronDown size={14} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-white">
+        <DropdownMenuRadioGroup value={selectedLanguage} onValueChange={handleLanguageChange}>
+          {languages.map((language) => (
+            <DropdownMenuRadioItem 
+              key={language.code} 
+              value={language.code}
+              className="cursor-pointer flex items-center justify-between py-2 px-3 hover:bg-gray-700"
             >
-              <span>{lang.nativeName}</span>
-              {selectedLanguage === lang.code && <Check size={16} />}
-            </button>
+              <span className="flex items-center">
+                <span className="mr-2">{language.nativeName}</span>
+                <span className="text-gray-400 text-xs">({language.name})</span>
+              </span>
+              {selectedLanguage === language.code && <Check size={16} className="text-purple-400" />}
+            </DropdownMenuRadioItem>
           ))}
-        </div>
-      )}
-    </div>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

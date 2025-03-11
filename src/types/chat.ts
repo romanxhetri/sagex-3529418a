@@ -7,6 +7,8 @@ export interface Message {
   language?: string;
   suggestedQuestions?: string[];
   reasoning?: string;
+  fileUrl?: string;
+  type?: "text" | "file" | "image";
 }
 
 export interface Capability {
@@ -26,3 +28,48 @@ export interface AIFeatures {
 }
 
 export type SupportedLanguage = "en" | "ne" | "es" | "fr" | "de" | "ja" | "zh" | "ar";
+
+export interface Laptop {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  priceNPR: number;
+  processor: string;
+  ram: string;
+  storage: string;
+  display: string;
+  graphics: string;
+  os: string;
+  battery: string;
+  weight: string;
+  color: string;
+  image: string;
+  inStock: boolean;
+  rating: number;
+  featured?: boolean;
+  discount?: number;
+  category: "gaming" | "business" | "student" | "professional" | "budget";
+}
+
+export interface Mobile {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  priceNPR: number;
+  camera: string;
+  display: string;
+  processor: string;
+  ram: string;
+  storage: string;
+  battery: string;
+  color: string;
+  os: string;
+  image: string;
+  inStock: boolean;
+  rating: number;
+  featured?: boolean;
+  discount?: number;
+  category: "flagship" | "mid-range" | "budget" | "camera" | "gaming";
+}

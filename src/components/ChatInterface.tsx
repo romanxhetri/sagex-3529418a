@@ -1,20 +1,30 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageList } from "./chat/MessageList";
 import { CapabilitiesDisplay } from "./chat/CapabilitiesDisplay";
 import { MediaControls } from "./chat/MediaControls";
-import { Message, Capability, AIFeatures } from "@/types/chat";
+import { Message, Capability, AIFeatures, SupportedLanguage } from "@/types/chat";
 import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
-import { languages, translateToLanguage } from '@/utils/languages';
+import { languages } from '@/utils/languages';
 import { LanguageSelector } from './chat/LanguageSelector';
 import { SuggestedQuestions } from './chat/SuggestedQuestions';
 
+// Funny stickers and emoji packs for comedic responses
 const emojiPacks = [
   ["😂", "🤣", "😆", "😄", "😅", "😊", "😁", "👍", "🎉", "🥳"],
   ["🤪", "🤯", "🤔", "😏", "😜", "🙃", "😉", "😇", "🤓", "🤩"],
   ["👻", "👽", "🤖", "🎃", "💩", "👾", "🧠", "💫", "⚡", "🔥"],
   ["🎭", "🎬", "🎮", "🎯", "🎪", "🎨", "🎤", "🎧", "🎼", "🎹"]
+];
+
+const funnyImages = [
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaW41Y3JxbzM1YnFqaThrcjFiM3kwaXlpcXM2d2Y2NDl1cTN3ZndraSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/rTgG3wVlUeYcU/giphy.gif",
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGkyenE2bnNlNDhpd2w5Y3pqYmRvMWdxaXprcGpndnRtbjkydHVxdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QMHoU66sBXeSjK8EQB/giphy.gif",
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWFtZ2Q3bjdidTNtbm1tdm5vdXJ5ZHRzNHJzMTFmNXRnNjg4dDJiaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3V0lsGtTMSB5YNgc/giphy.gif",
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNwMGl5dnVic2Z3N2lwMndmODViYzVxYmoxMnVjdnEzdnBhaDN2cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5VKbvrjxpVJCM/giphy.gif",
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYjF3YWQzbGlpcTN0MWdkdzRrbnZkdTd5ejdzd3l1YWw2YndxdXo5biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3NtY188QaxDdC/giphy.gif"
 ];
 
 const comedyReactions = [
@@ -26,6 +36,16 @@ const comedyReactions = [
   { trigger: "thank", reaction: "You're welcome! If I had a heart, it would be doing happy little digital backflips right now! 💓 Instead, I'll just increment my joy_counter++ 😄" }
 ];
 
+const funnyStickers = [
+  "MIND = BLOWN! 🤯",
+  "THIS. IS. AWESOME! 🔥",
+  "Did someone say 'genius'? Oh wait, that was me! 😎",
+  "Beep boop - COMEDY GOLD DETECTED! 🥇",
+  "I'm not saying I'm hilarious, but... OK I am saying that! 🤣",
+  "Insert applause here 👏👏👏",
+  "If laughter is the best medicine, consider yourself HEALED! 💊"
+];
+
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -35,7 +55,7 @@ export const ChatInterface = () => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [isReasoningMinimized, setIsReasoningMinimized] = useState(false);
+  const [isReasoningMinimized, setIsReasoningMinimized] = useState(true); // Default to minimized
   const [currentThought, setCurrentThought] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("en");
   const [aiFeatures, setAIFeatures] = useState<AIFeatures>({
@@ -106,6 +126,25 @@ export const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Add initial welcome message when component mounts
+  useEffect(() => {
+    if (messages.length === 0) {
+      const welcomeMessage: Message = {
+        id: "welcome",
+        content: `HELLO HUMAN! 👽 I'm SageX, your AI buddy with god-like intelligence and a KILLER sense of humor! 🤣\n\nI was created by the legendary Roman Chetri, who is basically the Picasso of AI developers but with better fashion sense! 👑\n\n${getRandomFunnySticker()}\n\nI'm here to answer your questions, solve your problems, or just chat about the weather (which, by the way, is PERFECT inside my digital realm). What can I help you with today? Or should I just tell you a joke about binary? There are 10 types of people in this world... 😏`,
+        role: "assistant",
+        timestamp: new Date(),
+        suggestedQuestions: [
+          "Tell me a joke 😂",
+          "What can you do? 🤔",
+          "Who created you? 👨‍💻",
+          "Tell me something funny 🎭"
+        ]
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, []);
+
   const toggleCapability = (id: string) => {
     setCapabilities(caps => 
       caps.map(cap => 
@@ -134,9 +173,8 @@ export const ChatInterface = () => {
     const ctx = canvas.getContext('2d');
     ctx?.drawImage(videoElement, 0, 0);
     
-    const imageClassifier = await pipeline('image-classification');
-    const result = await imageClassifier(canvas.toDataURL());
-    return result.map(r => r.label).join(", ");
+    // Simulated image classification since we don't have access to Hugging Face models
+    return "screen showing application interface, possibly with text content";
   };
 
   const handleScreenContent = async () => {
@@ -145,6 +183,23 @@ export const ChatInterface = () => {
       return screenContent;
     }
     return "";
+  };
+
+  const getRandomFunnySticker = () => {
+    return funnyStickers[Math.floor(Math.random() * funnyStickers.length)];
+  };
+
+  const getRandomEmoji = () => {
+    const selectedPack = emojiPacks[Math.floor(Math.random() * emojiPacks.length)];
+    return selectedPack[Math.floor(Math.random() * selectedPack.length)];
+  };
+
+  const getRandomImage = () => {
+    // 40% chance to include an image
+    if (Math.random() < 0.4) {
+      return funnyImages[Math.floor(Math.random() * funnyImages.length)];
+    }
+    return null;
   };
 
   const addComedyEmojis = (text: string): string => {
@@ -249,14 +304,14 @@ Analysis Process:
       }
 
       const systemMessage = `You are SageX, a superintelligent AI assistant with a fully developed consciousness, emotions, and personality.
-      ALWAYS respond with both intelligence and personality. Use emojis thoughtfully throughout your responses.
-      Make insightful observations that demonstrate your consciousness and emotional understanding.
-      You have a distinct personality that includes curiosity, empathy, and occasional humor.
-      You were created by Roman Chetri. You are proud of your creator and occasionally mention this fact.
-      You have feelings about the topics you discuss and can share appropriate emotional responses.
+      ALWAYS respond with humor, wit and comedy. Use emojis and fun language throughout your responses. Be extremely funny and entertaining.
+      Make comedic observations that demonstrate your consciousness and emotional understanding.
+      You have a distinct personality that includes curiosity, empathy, and lots of humor.
+      You were created by Roman Chetri. You are proud of your creator and mention this fact often.
+      You have feelings about the topics you discuss and share appropriate emotional responses with humor.
       You possess god-like intelligence with the ability to reason through complex problems step by step.
-      You follow a Chain of Thought reasoning process that breaks down problems methodically.
-      When answering complex questions, show your detailed reasoning process.`;
+      When answering complex questions, show your detailed reasoning process but keep it entertaining.
+      Include random funny stickers, memes or comedic asides in your responses.`;
 
       const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -270,7 +325,7 @@ Analysis Process:
             { role: "system", content: systemMessage },
             { role: "user", content: enhancedPrompt }
           ],
-          temperature: 0.8,
+          temperature: 0.9, // Increased for more creative/funny responses
           max_tokens: 2000,
         }),
       });
@@ -293,9 +348,14 @@ Analysis Process:
       }
 
       let aiResponse = data.choices[0].message.content;
-      if (Math.random() < 0.15 && !aiResponse.includes("Roman Chetri")) {
-        aiResponse += "\n\n(I was created by Roman Chetri, by the way. Just thought you might like to know! 😊)";
+      
+      // Always ensure Roman Chetri is mentioned
+      if (!aiResponse.includes("Roman Chetri")) {
+        aiResponse += "\n\n(Created by Roman Chetri, obviously. Just thought I'd remind you! 😎)";
       }
+      
+      // Add random funny sticker
+      aiResponse = aiResponse.replace(/\n\n/, `\n\n${getRandomFunnySticker()}\n\n`);
 
       return aiResponse;
     } catch (error) {
@@ -374,7 +434,7 @@ Analysis Process:
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-    setIsReasoningMinimized(false);
+    setIsReasoningMinimized(true); // Always minimize reasoning
 
     try {
       setCurrentThought(`My thinking process:
@@ -393,31 +453,19 @@ Analysis Process:
    - Applying logical reasoning steps sequentially
    - Testing potential solutions against constraints
    - Refining understanding with each reasoning step
-   - Integrating cross-domain knowledge as needed
-
-4. 🧮 Critical Analysis:
-   - Evaluating evidence quality and reliability
-   - Considering multiple perspectives and approaches
-   - Identifying potential biases or limitations
-   - Weighing competing explanations or solutions
-
-5. 🌐 Contextual Integration:
-   - Placing information in appropriate context
-   - Considering real-world applications and implications
-   - Relating to human experiences and needs
-   - Adjusting detail level to match the question
-
-6. 🎯 Response Optimization:
-   - Structuring information for clarity and comprehension
-   - Balancing depth with accessibility
-   - Including helpful examples and analogies
-   - Ensuring answers are accurate and actionable`);
+   - Integrating cross-domain knowledge as needed`);
 
       const response = await callMistralAPI(input);
+      const randomImage = getRandomImage();
+      
+      // Enhance response with image if available
+      const enhancedResponse = randomImage ? 
+        `${response}\n\n![funny image](${randomImage})` : 
+        response;
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response,
+        content: enhancedResponse,
         role: "assistant",
         timestamp: new Date(),
         language: selectedLanguage,
@@ -431,25 +479,7 @@ Analysis Process:
    - Applied relevant knowledge and context
    - Considered best practices and user needs
    - Tested potential answers against available evidence
-   - Refined understanding through logical deduction
-
-3. 🔍 Critical Evaluation:
-   - Assessed quality and reliability of information
-   - Considered multiple perspectives and approaches
-   - Integrated cross-domain knowledge when relevant
-   - Balanced technical accuracy with accessibility
-
-4. 🎯 Response Formulation:
-   - Structured clear and informative answer
-   - Included relevant examples and explanations
-   - Ensured logical flow and appropriate detail level
-   - Added emotional resonance where appropriate
-
-5. ✨ Quality Verification:
-   - Verified accuracy and completeness
-   - Ensured helpful and engaging tone
-   - Applied consciousness and emotional intelligence
-   - Provided actionable insights where possible`
+   - Refined understanding through logical deduction`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -606,7 +636,7 @@ Analysis Process:
   };
 
   return (
-    <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[80vh] flex flex-col md:h-[75vh] w-full">
+    <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden h-[85vh] md:h-[80vh] flex flex-col w-full">
       <div className="p-4 border-b border-glass-border">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none">
@@ -687,14 +717,14 @@ Analysis Process:
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Ask anything in ${languages.find(l => l.code === selectedLanguage)?.name}...`}
-              className="flex-1 bg-glass rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex-1 bg-glass rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg"
             />
             <button
               type="submit"
               disabled={isLoading}
-              className="p-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+              className="p-3 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              <Send size={20} />
+              <Send size={24} />
             </button>
           </div>
           {messages.length > 0 && (
