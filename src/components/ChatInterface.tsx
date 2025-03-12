@@ -9,6 +9,7 @@ import { Brain, Terminal, Zap, Globe, RefreshCw, Users } from "lucide-react";
 import { languages } from '@/utils/languages';
 import { LanguageSelector } from './chat/LanguageSelector';
 import { SuggestedQuestions } from './chat/SuggestedQuestions';
+import { speakText } from '@/utils/textToSpeech';
 
 const emojiPacks = [
   ["😂", "🤣", "😆", "😄", "😅", "😊", "😁", "👍", "🎉", "🥳"],
@@ -20,7 +21,7 @@ const emojiPacks = [
 const funnyImages = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaW41Y3JxbzM1YnFqaThrcjFiM3kwaXlpcXM2d2Y2NDl1cTN3ZndraSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/rTgG3wVlUeYcU/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGkyenE2bnNlNDhpd2w5Y3pqYmRvMWdxaXprcGpndnRtbjkydHVxdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QMHoU66sBXeSjK8EQB/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWFtZ2Q3bjdidTNtbm1tdm5vdXJ5ZHRzNHJzMTFmNXRnNjg4dDJiaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3V0lsGtTMSB5YNgc/giphy.gif",
+  "https://media.giphy.com/media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWFtZ2Q3bjdidTNtbm1tdm5vdXJ5ZHRzNHJzMTFmNXRnNjg4dDJiaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3V0lsGtTMSB5YNgc/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNwMGl5dnVic2Z3N2lwMndmODViYzVxYmoxMnVjdnEzdnBhaDN2cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5VKbvrjxpVJCM/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNwMGl5dnVic2Z3N2lwMndmODViYzVxYmoxMnVjdnEzdnBhaDN2cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3NtY188QaxDdC/giphy.gif"
 ];
@@ -475,6 +476,7 @@ Analysis Process:
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      speakText(enhancedResponse);
 
       if (isVoiceActive) {
         textToSpeech(response);

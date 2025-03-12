@@ -1,10 +1,9 @@
-
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { WeatherEffects } from "./WeatherEffects";
 
 interface UniverseBackgroundProps {
-  weatherType: "thunder" | "rain" | "fire" | "wind";
+  weatherType: "thunder" | "rain" | "fire" | "wind" | "magic";
 }
 
 export const UniverseBackground: React.FC<UniverseBackgroundProps> = ({ weatherType }) => {
@@ -332,3 +331,4 @@ export const UniverseBackground: React.FC<UniverseBackgroundProps> = ({ weatherT
     </div>
   );
 };
+
