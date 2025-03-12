@@ -16,7 +16,7 @@ const Mobiles = lazy(() => import("./pages/Mobiles"));
 const Updates = lazy(() => import("./pages/Updates"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Games = lazy(() => import("./pages/Games")); // Games page
+const Games = lazy(() => import("./pages/Games")); // New Games page
 const AppIntro = lazy(() => import("./components/AppIntro").then(module => ({ default: module.AppIntro })));
 
 // Loading fallback

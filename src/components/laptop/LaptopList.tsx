@@ -23,7 +23,7 @@ export const LaptopList = ({ laptops, filter }: LaptopListProps) => {
         laptop.ram.toLowerCase().includes(lowercaseFilter) ||
         laptop.category.toLowerCase().includes(lowercaseFilter) ||
         laptop.os.toLowerCase().includes(lowercaseFilter) ||
-        // Check for specific requirements (using proper category values)
+        // Check for specific requirements
         (lowercaseFilter.includes("gaming") && laptop.category === "gaming") ||
         (lowercaseFilter.includes("business") && laptop.category === "business") ||
         (lowercaseFilter.includes("student") && laptop.category === "student") ||

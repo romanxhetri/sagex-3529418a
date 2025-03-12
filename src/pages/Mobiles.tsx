@@ -77,7 +77,7 @@ const mobileData: Mobile[] = [
     batteryLife: "4700mAh",
     weight: "201g",
     os: "Nothing OS 2.0",
-    category: "mid-range", // Fixed: changed from "midrange" to "mid-range"
+    category: "midrange",
     rating: 4.5,
     features: ["Glyph Interface", "45W fast charging", "Wireless charging"]
   },
@@ -149,7 +149,7 @@ const mobileData: Mobile[] = [
     batteryLife: "5000mAh",
     weight: "202g",
     os: "Android 13",
-    category: "mid-range", // Fixed from "midrange" to "mid-range"
+    category: "midrange",
     rating: 4.3,
     features: ["IP67 water resistance", "Stereo speakers", "25W fast charging"]
   }

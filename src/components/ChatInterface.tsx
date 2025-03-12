@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -132,7 +133,7 @@ export const ChatInterface = () => {
         id: "welcome",
         content: `HELLO HUMAN! 👽 I'm SageX, your AI buddy with god-like intelligence and a KILLER sense of humor! 🤣\n\nI was created by the legendary Roman Chetri, who is basically the Picasso of AI developers but with better fashion sense! 👑\n\n${getRandomFunnySticker()}\n\nI'm here to answer your questions, solve your problems, or just chat about the weather (which, by the way, is PERFECT inside my digital realm). What can I help you with today? Or should I just tell you a joke about binary? There are 10 types of people in this world... 😏`,
         role: "assistant",
-        timestamp: Date.now(),
+        timestamp: new Date(),
         suggestedQuestions: [
           "Tell me a joke 😂",
           "What can you do? 🤔",
@@ -426,7 +427,7 @@ Analysis Process:
       id: Date.now().toString(),
       content: input,
       role: "user",
-      timestamp: Date.now(),
+      timestamp: new Date(),
       language: selectedLanguage
     };
 
@@ -466,7 +467,7 @@ Analysis Process:
         id: (Date.now() + 1).toString(),
         content: enhancedResponse,
         role: "assistant",
-        timestamp: Date.now(),
+        timestamp: new Date(),
         language: selectedLanguage,
         suggestedQuestions: generateSuggestedQuestions(response),
         reasoning: `1. 📝 Input Analysis:
@@ -541,7 +542,10 @@ Analysis Process:
   const startScreenShare = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: true,
+        video: { 
+          cursor: "always",
+          displaySurface: "monitor"
+        },
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -572,7 +576,7 @@ Analysis Process:
       });
     }
   };
-  
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -583,7 +587,7 @@ Analysis Process:
           id: Date.now().toString(),
           content: `Shared file: ${file.name}`,
           role: "user",
-          timestamp: Date.now(),
+          timestamp: new Date(),
           type: "file",
           fileUrl,
         };
