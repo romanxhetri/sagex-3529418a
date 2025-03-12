@@ -5,9 +5,12 @@ import { motion } from "framer-motion";
 import { GameCard } from "@/components/games/GameCard";
 import { TicTacToe } from "@/components/games/TicTacToe";
 import { ChessGame } from "@/components/games/ChessGame";
+import { MemoryMatch } from "@/components/games/MemoryMatch";
+import { AIPuzzle } from "@/components/games/AIPuzzle";
 import { Button } from "@/components/ui/button";
 import { GameChat } from "@/components/games/GameChat";
 import { Gamepad2, ChevronRight, Trophy, Gift, Crown } from "lucide-react";
+import confetti from "canvas-confetti";
 
 const Games = () => {
   const [currentGame, setCurrentGame] = useState<string | null>(null);
@@ -24,6 +27,12 @@ const Games = () => {
 
   const addPoints = (amount: number) => {
     setPoints(prev => prev + amount);
+    // Celebrate with confetti
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
   };
   
   const games = [
@@ -67,6 +76,10 @@ const Games = () => {
         return <TicTacToe onGameComplete={() => addPoints(10)} />;
       case "chess":
         return <ChessGame onGameComplete={() => addPoints(25)} />;
+      case "memory":
+        return <MemoryMatch onGameComplete={() => addPoints(15)} />;
+      case "puzzle":
+        return <AIPuzzle onGameComplete={(score) => addPoints(Math.floor(score / 10))} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-96 bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg p-8 text-center">
@@ -153,12 +166,20 @@ const Games = () => {
                     <div className="p-4">
                       <ul className="space-y-3">
                         <li className="flex justify-between items-center">
-                          <span>Win a game</span>
+                          <span>Win Tic Tac Toe</span>
                           <span className="font-bold text-yellow-400">+10 pts</span>
                         </li>
                         <li className="flex justify-between items-center">
-                          <span>Beat hard AI</span>
+                          <span>Win Memory Match</span>
+                          <span className="font-bold text-yellow-400">+15 pts</span>
+                        </li>
+                        <li className="flex justify-between items-center">
+                          <span>Win Chess Game</span>
                           <span className="font-bold text-yellow-400">+25 pts</span>
+                        </li>
+                        <li className="flex justify-between items-center">
+                          <span>Solve AI Puzzles</span>
+                          <span className="font-bold text-yellow-400">+5-20 pts</span>
                         </li>
                         <li className="flex justify-between items-center">
                           <span>Daily streak</span>
