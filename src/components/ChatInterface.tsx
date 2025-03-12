@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,6 @@ import { languages } from '@/utils/languages';
 import { LanguageSelector } from './chat/LanguageSelector';
 import { SuggestedQuestions } from './chat/SuggestedQuestions';
 
-// Funny stickers and emoji packs for comedic responses
 const emojiPacks = [
   ["😂", "🤣", "😆", "😄", "😅", "😊", "😁", "👍", "🎉", "🥳"],
   ["🤪", "🤯", "🤔", "😏", "😜", "🙃", "😉", "😇", "🤓", "🤩"],
@@ -24,7 +22,7 @@ const funnyImages = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGkyenE2bnNlNDhpd2w5Y3pqYmRvMWdxaXprcGpndnRtbjkydHVxdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QMHoU66sBXeSjK8EQB/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWFtZ2Q3bjdidTNtbm1tdm5vdXJ5ZHRzNHJzMTFmNXRnNjg4dDJiaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3V0lsGtTMSB5YNgc/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNwMGl5dnVic2Z3N2lwMndmODViYzVxYmoxMnVjdnEzdnBhaDN2cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5VKbvrjxpVJCM/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYjF3YWQzbGlpcTN0MWdkdzRrbnZkdTd5ejdzd3l1YWw2YndxdXo5biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3NtY188QaxDdC/giphy.gif"
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNwMGl5dnVic2Z3N2lwMndmODViYzVxYmoxMnVjdnEzdnBhaDN2cSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3NtY188QaxDdC/giphy.gif"
 ];
 
 const comedyReactions = [
@@ -55,7 +53,7 @@ export const ChatInterface = () => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [isReasoningMinimized, setIsReasoningMinimized] = useState(true); // Default to minimized
+  const [isReasoningMinimized, setIsReasoningMinimized] = useState(true);
   const [currentThought, setCurrentThought] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("en");
   const [aiFeatures, setAIFeatures] = useState<AIFeatures>({
@@ -126,14 +124,13 @@ export const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Add initial welcome message when component mounts
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: "welcome",
         content: `HELLO HUMAN! 👽 I'm SageX, your AI buddy with god-like intelligence and a KILLER sense of humor! 🤣\n\nI was created by the legendary Roman Chetri, who is basically the Picasso of AI developers but with better fashion sense! 👑\n\n${getRandomFunnySticker()}\n\nI'm here to answer your questions, solve your problems, or just chat about the weather (which, by the way, is PERFECT inside my digital realm). What can I help you with today? Or should I just tell you a joke about binary? There are 10 types of people in this world... 😏`,
         role: "assistant",
-        timestamp: new Date(),
+        timestamp: Date.now(),
         suggestedQuestions: [
           "Tell me a joke 😂",
           "What can you do? 🤔",
@@ -173,7 +170,6 @@ export const ChatInterface = () => {
     const ctx = canvas.getContext('2d');
     ctx?.drawImage(videoElement, 0, 0);
     
-    // Simulated image classification since we don't have access to Hugging Face models
     return "screen showing application interface, possibly with text content";
   };
 
@@ -195,7 +191,6 @@ export const ChatInterface = () => {
   };
 
   const getRandomImage = () => {
-    // 40% chance to include an image
     if (Math.random() < 0.4) {
       return funnyImages[Math.floor(Math.random() * funnyImages.length)];
     }
@@ -325,7 +320,7 @@ Analysis Process:
             { role: "system", content: systemMessage },
             { role: "user", content: enhancedPrompt }
           ],
-          temperature: 0.9, // Increased for more creative/funny responses
+          temperature: 0.9,
           max_tokens: 2000,
         }),
       });
@@ -349,12 +344,10 @@ Analysis Process:
 
       let aiResponse = data.choices[0].message.content;
       
-      // Always ensure Roman Chetri is mentioned
       if (!aiResponse.includes("Roman Chetri")) {
         aiResponse += "\n\n(Created by Roman Chetri, obviously. Just thought I'd remind you! 😎)";
       }
       
-      // Add random funny sticker
       aiResponse = aiResponse.replace(/\n\n/, `\n\n${getRandomFunnySticker()}\n\n`);
 
       return aiResponse;
@@ -427,14 +420,14 @@ Analysis Process:
       id: Date.now().toString(),
       content: input,
       role: "user",
-      timestamp: new Date(),
+      timestamp: Date.now(),
       language: selectedLanguage
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-    setIsReasoningMinimized(true); // Always minimize reasoning
+    setIsReasoningMinimized(true);
 
     try {
       setCurrentThought(`My thinking process:
@@ -458,7 +451,6 @@ Analysis Process:
       const response = await callMistralAPI(input);
       const randomImage = getRandomImage();
       
-      // Enhance response with image if available
       const enhancedResponse = randomImage ? 
         `${response}\n\n![funny image](${randomImage})` : 
         response;
@@ -467,7 +459,7 @@ Analysis Process:
         id: (Date.now() + 1).toString(),
         content: enhancedResponse,
         role: "assistant",
-        timestamp: new Date(),
+        timestamp: Date.now(),
         language: selectedLanguage,
         suggestedQuestions: generateSuggestedQuestions(response),
         reasoning: `1. 📝 Input Analysis:
@@ -543,7 +535,6 @@ Analysis Process:
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
         video: { 
-          cursor: "always",
           displaySurface: "monitor"
         },
         audio: {
@@ -587,7 +578,7 @@ Analysis Process:
           id: Date.now().toString(),
           content: `Shared file: ${file.name}`,
           role: "user",
-          timestamp: new Date(),
+          timestamp: Date.now(),
           type: "file",
           fileUrl,
         };

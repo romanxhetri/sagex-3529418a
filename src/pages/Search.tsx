@@ -1,7 +1,9 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Search as SearchIcon } from "lucide-react";
+import { UniverseBackground } from "@/components/UniverseBackground";
 import { PerplexitySearch } from "@/components/search/PerplexitySearch";
 import { Search, Globe, Zap, Database } from "lucide-react";
 
@@ -43,7 +45,7 @@ const Search = () => {
               <div className="bg-glass-dark backdrop-blur-lg border border-glass-border rounded-lg overflow-hidden">
                 <div className="p-3 border-b border-glass-border">
                   <div className="flex items-center">
-                    <Search className="text-purple-400 mr-2" size={16} />
+                    <SearchIcon className="text-purple-400 mr-2" size={16} />
                     <h3 className="text-sm font-medium text-white">Recent Searches</h3>
                   </div>
                 </div>

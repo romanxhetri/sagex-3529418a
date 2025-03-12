@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Sparkle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -34,19 +33,20 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
     scrollToBottom();
   }, [messages, currentThought, isReasoningMinimized]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (input.trim() === "") return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
       role: "user",
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+
     setIsLoading(true);
     setIsReasoningMinimized(false);
     
@@ -151,7 +151,7 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
    - Comprehensive coverage: ensured all key needs addressed in recommendations`
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -214,7 +214,7 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
       </div>
 
       <div className="p-4 border-t border-glass-border">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSendMessage} className="space-y-4">
           <div className="flex items-center space-x-4">
             <input
               type="text"

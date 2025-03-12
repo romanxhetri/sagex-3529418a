@@ -1,6 +1,7 @@
-
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+
+const the0 = 0; // Fix for undefined variable the0
 
 export const AnimatedCharacter = () => {
   const characterRef = useRef<HTMLDivElement>(null);
