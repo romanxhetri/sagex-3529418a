@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,7 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
       id: "welcome",
       content: "Hey there, tech enthusiast! 👋 I'm your personal smartphone wizard! Looking for a new pocket buddy? Tell me what you need - gaming monster? Selfie superstar? Battery beast? I'll find your perfect match! 😎📱",
       role: "assistant",
-      timestamp: new Date(),
+      timestamp: Date.now(),
       reasoning: "Initial funny welcome message that establishes a comedic personality to engage users."
     }
   ]);
@@ -56,7 +55,7 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
       id: Date.now().toString(),
       content: input,
       role: "user",
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -116,7 +115,7 @@ My analysis:
         id: (Date.now() + 1).toString(),
         content: responseContent,
         role: "assistant",
-        timestamp: new Date(),
+        timestamp: Date.now(),
         reasoning: `1. 📊 Customer Analysis:
    - User request keywords: "${input.split(" ").join('", "')}"
    - Detected primary concern: ${input.includes("camera") ? "camera quality" : 
@@ -124,24 +123,7 @@ My analysis:
      input.includes("gaming") ? "performance" : "general features"}
    - Price sensitivity: ${input.includes("cheap") ? "high" : 
      input.includes("flagship") ? "low" : "medium"}
-
-2. 🧠 Psychological Approach:
-   - Using humor to build rapport and make tech accessible
-   - Adding emojis for visual engagement
-   - Creating FOMO (Fear Of Missing Out) to drive purchase impulse
-   - Including social validation references ("friends will be jealous")
-
-3. 🎯 Sales Strategy Execution:
-   - Highlighting extreme benefits with hyperbole for comedic effect
-   - Making direct comparisons to emphasize benefits
-   - Using casual, conversational language to create friendly atmosphere
-   - Planting seed for immediate action
-
-4. 💬 Response Customization:
-   - Tone: enthusiastic and comedic to make tech shopping fun
-   - Format: short paragraphs with emojis for easy mobile reading
-   - Reading level: conversational to create connection
-   - Added stickers/catchphrases for brand personality`
+      `
       };
 
       setMessages(prev => [...prev, assistantMessage]);

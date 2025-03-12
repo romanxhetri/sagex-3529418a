@@ -26,7 +26,11 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   type?: "text" | "image" | "file";
-  timestamp?: number;
+  timestamp?: number | Date;
+  language?: SupportedLanguage;
+  reasoning?: string;
+  fileUrl?: string;
+  suggestedQuestions?: string[];
 }
 
 export interface Laptop {
@@ -34,7 +38,7 @@ export interface Laptop {
   name: string;
   brand: string;
   price: number;
-  imageUrl: string; // Added this field
+  imageUrl: string;
   processor: string;
   ram: string;
   storage: string;
@@ -42,12 +46,12 @@ export interface Laptop {
   graphics: string;
   weight: string;
   os: string;
-  batteryLife: string; // Added this field
+  batteryLife: string;
   ports: string[];
-  category: "gaming" | "ultrabook" | "workstation" | "budget" | "convertible";
+  category: "gaming" | "ultrabook" | "workstation" | "budget" | "convertible" | "business" | "student" | "creative";
   features: string[];
   rating?: number;
-  priceNpr?: number; // Added for Nepali Rupees price
+  priceNpr?: number;
 }
 
 export interface Mobile {
@@ -55,13 +59,13 @@ export interface Mobile {
   name: string;
   brand: string;
   price: number;
-  imageUrl: string; // Added this field
+  imageUrl: string;
   processor: string;
   ram: string;
   storage: string;
   display: string;
   camera: string;
-  batteryLife: string; // Added this field
+  batteryLife: string;
   weight: string;
   os: string;
   category: "gaming" | "budget" | "flagship" | "mid-range" | "camera";
@@ -98,6 +102,22 @@ export interface WeatherData {
   humidity: number;
   windSpeed: number;
   icon: string;
+}
+
+export interface Capability {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  enabled: boolean;
+  description: string;
+}
+
+export interface AIFeatures {
+  contextualMemory: boolean;
+  multimodalProcessing: boolean;
+  logicalReasoning: boolean;
+  realTimeSearch: boolean;
+  safeMode: boolean;
 }
 
 // Add a definition for React Three Fiber JSX

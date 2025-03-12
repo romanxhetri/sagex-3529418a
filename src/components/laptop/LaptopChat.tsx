@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Sparkle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,7 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
       id: "welcome",
       content: "Hello! I'm your laptop shopping assistant. Tell me what you're looking for in a laptop, and I'll help you find the perfect match! 💻",
       role: "assistant",
-      timestamp: new Date(),
+      timestamp: Date.now(),
       reasoning: "Initial welcome message to help users understand how to interact with the laptop assistant."
     }
   ]);
@@ -42,7 +41,7 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
       id: Date.now().toString(),
       content: input,
       role: "user",
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -120,35 +119,14 @@ export const LaptopChat = ({ onRecommendation }: LaptopChatProps) => {
         id: (Date.now() + 1).toString(),
         content: "I've analyzed your preferences and found some laptop options that might be a good fit. Check out the recommendations below! Feel free to ask for more specific details about any model.",
         role: "assistant",
-        timestamp: new Date(),
+        timestamp: Date.now(),
         reasoning: `## Reasoning Process
 
 1. **Query Analysis**
    - User asked: "${input}"
    - Identified key requirements: ${input.includes("gaming") ? "gaming capabilities" : input.includes("professional") ? "professional use" : "general purpose computing"}
    - Budget expectations: ${input.includes("budget") || input.includes("cheap") ? "cost-effective options" : input.includes("premium") ? "high-end models" : "various price points"}
-
-2. **Technical Needs Assessment**
-   - CPU requirements: ${input.includes("performance") || input.includes("fast") ? "high-performance processors" : "standard processors"}
-   - Graphics needs: ${input.includes("gaming") || input.includes("design") ? "dedicated graphics" : "integrated graphics"}
-   - Memory recommendations: ${input.includes("multitasking") ? "16GB+ RAM" : "8-16GB RAM"}
-   - Storage considerations: ${input.includes("storage") ? "prioritizing larger storage" : "balanced storage options"}
-
-3. **User Experience Priorities**
-   - Form factor: ${input.includes("portable") || input.includes("light") ? "emphasizing portability" : "standard form factors"}
-   - Display preferences: ${input.includes("screen") || input.includes("display") ? "quality displays" : "standard displays"}
-   - Battery expectations: ${input.includes("battery") ? "long battery life" : "standard battery performance"}
-
-4. **Market Analysis**
-   - Current top performers in this category: evaluated latest models from major manufacturers
-   - Price-to-performance ratio: optimized selections for value
-   - Reliability factors: considered brand reputation and build quality
-   - Availability: verified current market availability
-
-5. **Final Selection Logic**
-   - Diverse options: provided variety across price points and specifications
-   - Targeted alternatives: included specific options for unique requirements
-   - Comprehensive coverage: ensured all key needs addressed in recommendations`
+      `
       };
 
       setMessages(prev => [...prev, assistantMessage]);

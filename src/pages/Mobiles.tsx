@@ -149,7 +149,7 @@ const mobileData: Mobile[] = [
     batteryLife: "5000mAh",
     weight: "202g",
     os: "Android 13",
-    category: "midrange",
+    category: "mid-range", // Fixed from "midrange" to "mid-range"
     rating: 4.3,
     features: ["IP67 water resistance", "Stereo speakers", "25W fast charging"]
   }

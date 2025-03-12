@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Brain, RefreshCw, CheckCircle, XCircle, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
+import { PuzzleType } from "@/types/chat";
 
 // AI-generated puzzles
 const puzzles = [
@@ -12,105 +12,105 @@ const puzzles = [
     question: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
     answer: "echo",
     hint: "I come back to you after you make a sound",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 2,
     question: "What has keys but no locks, space but no room, and you can enter but not go in?",
     answer: "keyboard",
     hint: "You use me to type messages",
-    difficulty: "easy"
+    difficulty: "easy" as const
   },
   {
     id: 3,
     question: "The more you take, the more you leave behind. What am I?",
     answer: "footsteps",
     hint: "You make these when you walk",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 4,
     question: "What has a head, a tail, is brown, and has no legs?",
     answer: "penny",
     hint: "I'm a small coin",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 5,
     question: "I'm light as a feather, but even the strongest person can't hold me for more than a few minutes. What am I?",
     answer: "breath",
     hint: "You need me to live, but can't see me",
-    difficulty: "hard"
+    difficulty: "hard" as const
   },
   {
     id: 6,
     question: "A man who was outside in the rain without an umbrella or hat didn't get a single hair on his head wet. Why?",
     answer: "bald",
     hint: "He had no hair to get wet",
-    difficulty: "easy"
+    difficulty: "easy" as const
   },
   {
     id: 7,
     question: "What can travel around the world while staying in a corner?",
     answer: "stamp",
     hint: "I help letters reach their destination",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 8,
     question: "Forward I am heavy, but backward I am not. What am I?",
     answer: "ton",
     hint: "Read my name backwards",
-    difficulty: "hard"
+    difficulty: "hard" as const
   },
   {
     id: 9,
     question: "What has many keys but can't open a single lock?",
     answer: "piano",
     hint: "I make music when you press my keys",
-    difficulty: "easy"
+    difficulty: "easy" as const
   },
   {
     id: 10,
     question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?",
     answer: "map",
     hint: "I help you navigate to places",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 11,
     question: "What is full of holes but still holds water?",
     answer: "sponge",
     hint: "I'm used for cleaning and absorbing liquids",
-    difficulty: "easy"
+    difficulty: "easy" as const
   },
   {
     id: 12,
     question: "If I drink, I die. If I eat, I'm fine. What am I?",
     answer: "fire",
     hint: "I can warm you, but I can also burn you",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 13,
     question: "What can run but never walks, has a mouth but never talks, has a head but never weeps, has a bed but never sleeps?",
     answer: "river",
     hint: "I flow from mountains to the sea",
-    difficulty: "hard"
+    difficulty: "hard" as const
   },
   {
     id: 14,
     question: "The more it dries, the wetter it gets. What is it?",
     answer: "towel",
     hint: "You use me after a shower",
-    difficulty: "medium"
+    difficulty: "medium" as const
   },
   {
     id: 15,
     question: "Mary has four daughters, and each of her daughters has a brother. How many children does Mary have?",
     answer: "5",
     hint: "All daughters share the same brother",
-    difficulty: "hard"
+    difficulty: "hard" as const
   }
 ];
 
@@ -145,7 +145,7 @@ export const AIPuzzle = ({ onGameComplete }: { onGameComplete: (score: number) =
     if (filteredPuzzles.length === 0) return null;
     
     const randomIndex = Math.floor(Math.random() * filteredPuzzles.length);
-    return filteredPuzzles[randomIndex];
+    return filteredPuzzles[randomIndex] as PuzzleType;
   };
   
   // Update puzzle
