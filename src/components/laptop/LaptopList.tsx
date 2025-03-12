@@ -1,4 +1,3 @@
-
 import React from "react";
 import { LaptopCard } from "./LaptopCard";
 import { Laptop } from "@/types/chat";
@@ -15,7 +14,6 @@ export const LaptopList = ({ laptops, filter }: LaptopListProps) => {
     const lowercaseFilter = filterText.toLowerCase();
     
     return laptops.filter(laptop => {
-      // Check various laptop properties for matches
       return (
         laptop.name.toLowerCase().includes(lowercaseFilter) ||
         laptop.brand.toLowerCase().includes(lowercaseFilter) ||
@@ -23,13 +21,7 @@ export const LaptopList = ({ laptops, filter }: LaptopListProps) => {
         laptop.ram.toLowerCase().includes(lowercaseFilter) ||
         laptop.category.toLowerCase().includes(lowercaseFilter) ||
         laptop.os.toLowerCase().includes(lowercaseFilter) ||
-        // Check for specific category requirements - fixed to match updated category types
-        (lowercaseFilter.includes("gaming") && laptop.category === "gaming") ||
-        (lowercaseFilter.includes("business") && laptop.category === "business") ||
-        (lowercaseFilter.includes("student") && laptop.category === "student") ||
-        (lowercaseFilter.includes("creative") && laptop.category === "creative") ||
-        (lowercaseFilter.includes("budget") && laptop.category === "budget") ||
-        // Check for price ranges
+        // Price range checks
         (lowercaseFilter.includes("cheap") && laptop.price < 800) ||
         (lowercaseFilter.includes("expensive") && laptop.price > 1500) ||
         (lowercaseFilter.includes("mid-range") && laptop.price >= 800 && laptop.price <= 1500)

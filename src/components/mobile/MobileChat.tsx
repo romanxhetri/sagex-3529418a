@@ -47,19 +47,23 @@ export const MobileChat = ({ onRecommendation }: MobileChatProps) => {
     return stickers[Math.floor(Math.random() * stickers.length)];
   };
 
+  const handleNewMessage = (content: string, role: "user" | "assistant" = "user") => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      role,
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() === "") return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      role: "user",
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    handleNewMessage(input);
 
     setIsLoading(true);
     setIsThinkingVisible(true);

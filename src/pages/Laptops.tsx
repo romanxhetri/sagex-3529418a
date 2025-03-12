@@ -131,4 +131,18 @@ const Laptops = () => {
       weight: "1.27 kg",
       os: "Windows 11 Home",
       color: "Platinum",
-      image: "https://img-prod-cms-rt-microsoft.crtd.o
+      image: "https://img-prod-cms-rt-microsoft.crtd.o",
+    }
+  ];
+
+  return (
+    <motion.div>
+      <Header />
+      <MagicalUniverseScene />
+      <LaptopChat />
+      <LaptopList laptops={defaultLaptops} onRecommendation={handleRecommendation} />
+    </motion.div>
+  );
+};
+
+export default Laptops;

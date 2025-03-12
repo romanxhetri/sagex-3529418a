@@ -3,7 +3,7 @@ export interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
-  timestamp: number | Date;
+  timestamp: number;  // Changed to only accept number
   language?: string;
   suggestedQuestions?: string[];
   reasoning?: string;
@@ -45,15 +45,15 @@ export interface Laptop {
   weight: string;
   color: string;
   image: string;
-  imageUrl?: string; // Added for backward compatibility
-  batteryLife?: string; // Added for backward compatibility
+  imageUrl?: string;
+  batteryLife?: string;
   inStock: boolean;
   rating: number;
   featured?: boolean;
   discount?: number;
   category: "gaming" | "business" | "student" | "professional" | "budget" | "creative" | "ultrabook" | "workstation" | "convertible";
-  ports?: string[];
-  features?: string[];
+  ports: string[];
+  features: string[];
 }
 
 export interface Mobile {
@@ -68,16 +68,17 @@ export interface Mobile {
   ram: string;
   storage: string;
   battery: string;
-  batteryLife?: string; // Added for backward compatibility
+  batteryLife?: string;
   color: string;
   os: string;
   image: string;
-  imageUrl?: string; // Added for backward compatibility
+  imageUrl?: string;
   inStock: boolean;
   rating: number;
   featured?: boolean;
   discount?: number;
   weight?: string;
-  features?: string[];
+  features: string[];
   category: "flagship" | "mid-range" | "budget" | "camera" | "gaming";
 }
+
